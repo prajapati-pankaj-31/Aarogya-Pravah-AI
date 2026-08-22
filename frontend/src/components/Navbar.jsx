@@ -19,25 +19,29 @@ export const Navbar = () => {
   };
 
   return (
-    <header className="bg-surface border-b border-outline-variant sticky top-0 z-50 w-full">
-      <div className="max-w-container-max mx-auto px-margin-mobile md:px-margin-desktop h-16 flex items-center justify-between">
+    <header className="bg-surface border-b border-outline-variant sticky top-0 z-50 w-full max-w-full">
+      <div className="max-w-container-max mx-auto px-4 sm:px-6 md:px-8 h-16 flex items-center justify-between gap-2 sm:gap-4 w-full">
         {/* Brand & Nav */}
-        <div className="flex items-center space-x-8">
-          <Link to="/" className="flex items-center gap-2">
-            <span className="material-symbols-outlined text-primary text-3xl" style={{ fontVariationSettings: "'FILL' 1" }}>
+        <div className="flex items-center gap-3 xl:gap-6 min-w-0">
+          <Link to="/" className="flex items-center gap-2 shrink-0 select-none py-1">
+            <span className="material-symbols-outlined text-primary text-2xl sm:text-3xl shrink-0" style={{ fontVariationSettings: "'FILL' 1" }}>
               local_hospital
             </span>
-            <div className="flex flex-col">
-              <span className="text-title-md font-headline-lg font-bold text-primary leading-tight">SmartQueue AI</span>
-              <span className="text-[10px] font-label-sm text-secondary -mt-0.5 hidden sm:inline">Clinical Triage Platform</span>
+            <div className="flex flex-col justify-center">
+              <span className="text-sm sm:text-base xl:text-title-md font-headline-lg font-bold text-primary leading-tight whitespace-nowrap">
+                Aarogya Pravah AI
+              </span>
+              <span className="text-[9px] sm:text-[10px] font-label-sm text-secondary tracking-wider uppercase hidden sm:block whitespace-nowrap leading-none mt-0.5">
+                Clinical Triage Platform
+              </span>
             </div>
           </Link>
 
-          {/* Desktop Navigation Links */}
-          <nav className="hidden lg:flex space-x-4 h-full items-center">
+          {/* Desktop Navigation Links (XL screens and up) */}
+          <nav className="hidden xl:flex space-x-1 2xl:space-x-2 h-full items-center">
             <Link
               to="/"
-              className={`text-label-sm font-label-sm px-3 py-1.5 rounded transition-colors ${
+              className={`text-xs 2xl:text-sm font-label-sm px-2.5 py-1.5 rounded transition-colors whitespace-nowrap ${
                 isActive("/") ? "text-primary font-bold border-b-2 border-primary bg-surface-container-low" : "text-on-surface-variant hover:bg-surface-container-low"
               }`}
             >
@@ -45,7 +49,7 @@ export const Navbar = () => {
             </Link>
             <Link
               to="/triage-queue"
-              className={`text-label-sm font-label-sm px-3 py-1.5 rounded transition-colors ${
+              className={`text-xs 2xl:text-sm font-label-sm px-2.5 py-1.5 rounded transition-colors whitespace-nowrap ${
                 isActive("/triage-queue") ? "text-primary font-bold border-b-2 border-primary bg-surface-container-low" : "text-on-surface-variant hover:bg-surface-container-low"
               }`}
             >
@@ -53,7 +57,7 @@ export const Navbar = () => {
             </Link>
             <Link
               to="/staff/validation"
-              className={`text-label-sm font-label-sm px-3 py-1.5 rounded transition-colors ${
+              className={`text-xs 2xl:text-sm font-label-sm px-2.5 py-1.5 rounded transition-colors whitespace-nowrap ${
                 isActive("/staff/validation") || isActive("/staff/dashboard") ? "text-primary font-bold border-b-2 border-primary bg-surface-container-low" : "text-on-surface-variant hover:bg-surface-container-low"
               }`}
             >
@@ -61,7 +65,7 @@ export const Navbar = () => {
             </Link>
             <Link
               to="/doctor/dashboard"
-              className={`text-label-sm font-label-sm px-3 py-1.5 rounded transition-colors ${
+              className={`text-xs 2xl:text-sm font-label-sm px-2.5 py-1.5 rounded transition-colors whitespace-nowrap ${
                 isActive("/doctor/dashboard") ? "text-primary font-bold border-b-2 border-primary bg-surface-container-low" : "text-on-surface-variant hover:bg-surface-container-low"
               }`}
             >
@@ -69,7 +73,7 @@ export const Navbar = () => {
             </Link>
             <Link
               to="/patient-history"
-              className={`text-label-sm font-label-sm px-3 py-1.5 rounded transition-colors ${
+              className={`text-xs 2xl:text-sm font-label-sm px-2.5 py-1.5 rounded transition-colors whitespace-nowrap ${
                 isActive("/patient-history") ? "text-primary font-bold border-b-2 border-primary bg-surface-container-low" : "text-on-surface-variant hover:bg-surface-container-low"
               }`}
             >
@@ -77,27 +81,71 @@ export const Navbar = () => {
             </Link>
             <Link
               to="/ai-insights"
-              className={`text-label-sm font-label-sm px-3 py-1.5 rounded transition-colors ${
+              className={`text-xs 2xl:text-sm font-label-sm px-2.5 py-1.5 rounded transition-colors whitespace-nowrap ${
                 isActive("/ai-insights") ? "text-primary font-bold border-b-2 border-primary bg-surface-container-low" : "text-on-surface-variant hover:bg-surface-container-low"
               }`}
             >
               AI Insights
             </Link>
           </nav>
+
+          {/* Compact Nav for LG screens (1024px - 1279px) */}
+          <nav className="hidden lg:flex xl:hidden space-x-1 h-full items-center">
+            <Link
+              to="/"
+              className={`text-xs font-label-sm px-2 py-1 rounded transition-colors whitespace-nowrap ${
+                isActive("/") ? "text-primary font-bold bg-surface-container-low" : "text-on-surface-variant hover:bg-surface-container-low"
+              }`}
+            >
+              Patients
+            </Link>
+            <Link
+              to="/triage-queue"
+              className={`text-xs font-label-sm px-2 py-1 rounded transition-colors whitespace-nowrap ${
+                isActive("/triage-queue") ? "text-primary font-bold bg-surface-container-low" : "text-on-surface-variant hover:bg-surface-container-low"
+              }`}
+            >
+              Queue
+            </Link>
+            <Link
+              to="/staff/validation"
+              className={`text-xs font-label-sm px-2 py-1 rounded transition-colors whitespace-nowrap ${
+                isActive("/staff/validation") ? "text-primary font-bold bg-surface-container-low" : "text-on-surface-variant hover:bg-surface-container-low"
+              }`}
+            >
+              Staff
+            </Link>
+            <Link
+              to="/doctor/dashboard"
+              className={`text-xs font-label-sm px-2 py-1 rounded transition-colors whitespace-nowrap ${
+                isActive("/doctor/dashboard") ? "text-primary font-bold bg-surface-container-low" : "text-on-surface-variant hover:bg-surface-container-low"
+              }`}
+            >
+              Doctor
+            </Link>
+            <Link
+              to="/ai-insights"
+              className={`text-xs font-label-sm px-2 py-1 rounded transition-colors whitespace-nowrap ${
+                isActive("/ai-insights") ? "text-primary font-bold bg-surface-container-low" : "text-on-surface-variant hover:bg-surface-container-low"
+              }`}
+            >
+              AI
+            </Link>
+          </nav>
         </div>
 
         {/* Right Tools & Profile */}
-        <div className="flex items-center space-x-3">
-          {/* Quick Search */}
-          <form onSubmit={handleSearchSubmit} className="relative hidden md:block w-48 xl:w-64">
+        <div className="flex items-center space-x-2 sm:space-x-3 shrink-0">
+          {/* Quick Search (2XL screens only to save navbar real estate) */}
+          <form onSubmit={handleSearchSubmit} className="relative hidden 2xl:block w-48">
             <input
               type="text"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              placeholder="Search token (TKN-042)..."
-              className="w-full bg-surface-container-lowest border border-outline-variant rounded px-3 py-1.5 pl-8 text-sm focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary text-on-surface transition-all font-body-md"
+              placeholder="Search token..."
+              className="w-full bg-surface-container-lowest border border-outline-variant rounded px-3 py-1.5 pl-8 text-xs focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary text-on-surface transition-all font-body-md"
             />
-            <span className="material-symbols-outlined absolute left-2 top-2 text-on-surface-variant text-base">
+            <span className="material-symbols-outlined absolute left-2 top-2 text-on-surface-variant text-sm">
               search
             </span>
           </form>
@@ -105,7 +153,7 @@ export const Navbar = () => {
           {/* Emergency Triage Badge */}
           <Link
             to="/appointment/new?emergency=true"
-            className="text-error bg-error-container hover:bg-error hover:text-on-error px-3 py-1.5 rounded font-label-sm text-xs font-semibold transition-colors flex items-center gap-1.5 shadow-sm"
+            className="text-error bg-error-container hover:bg-error hover:text-on-error px-2.5 sm:px-3 py-1.5 rounded font-label-sm text-xs font-semibold transition-colors flex items-center gap-1.5 shadow-sm whitespace-nowrap shrink-0"
           >
             <span className="material-symbols-outlined text-sm">emergency</span>
             <span className="hidden sm:inline">Emergency Triage</span>
@@ -113,7 +161,7 @@ export const Navbar = () => {
 
           {/* User / Auth State */}
           {isAuthenticated ? (
-            <div className="relative">
+            <div className="relative shrink-0">
               <button
                 onClick={() => setShowUserMenu(!showUserMenu)}
                 className="flex items-center gap-2 p-1 rounded-full hover:bg-surface-container-low transition-colors"
@@ -154,10 +202,10 @@ export const Navbar = () => {
           ) : (
             <Link
               to="/login"
-              className="bg-primary text-on-primary px-3 py-1.5 rounded font-label-sm text-xs font-medium hover:bg-on-primary-fixed-variant transition-colors flex items-center gap-1"
+              className="bg-primary text-on-primary px-2.5 sm:px-3 py-1.5 rounded font-label-sm text-xs font-medium hover:bg-on-primary-fixed-variant transition-colors flex items-center gap-1 whitespace-nowrap shrink-0"
             >
               <span className="material-symbols-outlined text-base">lock</span>
-              Staff Login
+              <span>Staff Login</span>
             </Link>
           )}
         </div>

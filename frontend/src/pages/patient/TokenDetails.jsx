@@ -2,12 +2,14 @@ import React, { useState, useEffect } from "react";
 import { useParams, Link } from "react-router-dom";
 import Navbar from "../../components/Navbar";
 import appointmentService from "../../services/appointmentService";
+import socketService from "../../services/socketService";
 import useSocket from "../../hooks/useSocket";
 
 export const TokenDetails = () => {
   const { tokenNumber } = useParams();
   const [tokenData, setTokenData] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [liveAlert, setLiveAlert] = useState("");
 
   const fetchDetails = async () => {
     if (!tokenNumber) return;
@@ -15,6 +17,7 @@ export const TokenDetails = () => {
       const response = await appointmentService.getAppointmentByToken(tokenNumber);
       if (response.success && response.data) {
         setTokenData(response.data);
+        socketService.joinPatient(response.data.tokenNumber);
       }
     } finally {
       setLoading(false);
@@ -25,7 +28,21 @@ export const TokenDetails = () => {
     fetchDetails();
   }, [tokenNumber]);
 
-  useSocket("queue-updated", () => {
+  useSocket("patient_status_updated", (payload) => {
+    if (tokenNumber && payload.tokenNumber === tokenNumber) {
+      fetchDetails();
+      if (payload.message) setLiveAlert(payload.message);
+    }
+  });
+
+  useSocket("patient_called", (payload) => {
+    if (tokenNumber && payload.tokenNumber === tokenNumber) {
+      fetchDetails();
+      setLiveAlert(`🔔 Doctor ${payload.doctorName || ""} is calling your token! Please proceed to ${payload.roomNumber || "the consultation room"}.`);
+    }
+  });
+
+  useSocket("queue_updated", () => {
     fetchDetails();
   });
 
@@ -33,6 +50,18 @@ export const TokenDetails = () => {
     <div className="bg-background text-on-background min-h-screen">
       <Navbar />
       <main className="max-w-2xl mx-auto p-margin-mobile md:p-margin-desktop py-12">
+        {liveAlert && (
+          <div className="mb-6 p-4 bg-primary-container text-on-primary-container rounded-xl border border-primary/30 flex items-center justify-between shadow-md animate-fade-in-up">
+            <div className="flex items-center gap-3">
+              <span className="material-symbols-outlined text-2xl text-primary animate-bounce">campaign</span>
+              <span className="font-body-md font-semibold text-sm">{liveAlert}</span>
+            </div>
+            <button onClick={() => setLiveAlert("")} className="text-on-primary-container hover:opacity-75">
+              <span className="material-symbols-outlined text-lg">close</span>
+            </button>
+          </div>
+        )}
+
         <div className="bg-surface rounded-xl border border-outline-variant overflow-hidden shadow-xl">
           {/* Header Ticket Banner */}
           <div className="bg-primary text-on-primary p-8 text-center relative overflow-hidden">
@@ -40,12 +69,12 @@ export const TokenDetails = () => {
               <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
               Live Queue Ticket
             </div>
-            <p className="font-label-sm text-xs uppercase tracking-widest opacity-80 mb-2">City General Hospital</p>
+            <p className="font-label-sm text-xs uppercase tracking-widest opacity-80 mb-2">Aarogya Pravah AI • Hospital Portal</p>
             <h1 className="font-data-display text-4xl sm:text-5xl font-bold tracking-tight mb-2">
               {tokenNumber || "TKN-042"}
             </h1>
             <p className="font-body-md text-sm opacity-90">
-              Department: <span className="font-semibold">{tokenData?.department || "Cardiology"}</span>
+              Department: <span className="font-semibold">{tokenData?.department || "General Medicine"}</span>
             </p>
           </div>
 
@@ -54,11 +83,11 @@ export const TokenDetails = () => {
             <div className="grid grid-cols-2 gap-4 border-b border-outline-variant pb-6">
               <div>
                 <p className="text-xs font-label-sm text-secondary uppercase">Estimated Wait</p>
-                <p className="font-display-lg text-display-lg text-primary">{tokenData?.estimatedWaitTime || "35 min"}</p>
+                <p className="font-display-lg text-display-lg text-primary">{tokenData?.estimatedWaitTime || "Calculating..."}</p>
               </div>
               <div className="text-right">
                 <p className="text-xs font-label-sm text-secondary uppercase">Queue Position</p>
-                <p className="font-display-lg text-display-lg text-on-surface">{tokenData?.queuePosition || "#6"}</p>
+                <p className="font-display-lg text-display-lg text-on-surface">{tokenData?.queuePosition || "#--"}</p>
               </div>
             </div>
 
@@ -70,7 +99,7 @@ export const TokenDetails = () => {
                 </span>
                 <div>
                   <p className="font-body-md font-semibold text-on-surface">
-                    {tokenData?.status || "Waiting for Triage Validation"}
+                    {tokenData?.status || "Waiting for Staff Verification"}
                   </p>
                   <p className="text-xs text-on-surface-variant">
                     Please remain seated in the waiting area. You will be alerted when called.
@@ -78,6 +107,13 @@ export const TokenDetails = () => {
                 </div>
               </div>
             </div>
+
+            {tokenData?.isPending && (
+              <div className="p-4 bg-amber-50 border border-amber-200 rounded-lg text-amber-800 text-xs">
+                <p className="font-semibold">Notice: Consultation Temporarily on Hold</p>
+                <p className="mt-0.5">{tokenData?.pendingReason || "Diagnostic scan in progress."}</p>
+              </div>
+            )}
 
             <div className="bg-secondary-container/40 p-4 rounded-lg text-xs font-body-md text-on-secondary-container">
               <p className="font-semibold mb-1">Notice for Emergency Patients:</p>

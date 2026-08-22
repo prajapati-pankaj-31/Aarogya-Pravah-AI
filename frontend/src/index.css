@@ -3,10 +3,29 @@
 @tailwind utilities;
 
 @layer base {
+  *,
+  *::before,
+  *::after {
+    box-sizing: border-box;
+  }
+
+  html,
   body {
+    width: 100%;
+    max-width: 100%;
+    margin: 0;
+    padding: 0;
     background-color: #f9f9ff;
     color: #111c2d;
     font-family: 'Inter', sans-serif;
+  }
+
+  img,
+  svg,
+  video,
+  canvas {
+    max-width: 100%;
+    height: auto;
   }
 }
 
@@ -49,6 +68,8 @@
   border-radius: 0.125rem;
   color: #111c2d;
   transition: all 0.2s ease;
+  max-width: 100%;
+  box-sizing: border-box;
 }
 
 .clinical-input:focus {

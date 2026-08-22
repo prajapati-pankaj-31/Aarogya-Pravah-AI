@@ -2,12 +2,12 @@ import React from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import useAuth from "../hooks/useAuth";
 
-export const Sidebar = ({ activeSection = "live_queue" }) => {
+export const Sidebar = ({ activeSection = "dashboard" }) => {
   const location = useLocation();
   const navigate = useNavigate();
   const { user, logout } = useAuth();
 
-  const isDoctor = user?.role === "doctor";
+  const isDoctor = user?.role?.toLowerCase() === "doctor";
 
   return (
     <aside className="hidden md:flex flex-col w-64 bg-surface border-r border-outline-variant h-screen fixed left-0 top-0 z-40 py-6 space-y-2 flex-shrink-0">
@@ -20,21 +20,21 @@ export const Sidebar = ({ activeSection = "live_queue" }) => {
             </span>
           </div>
           <div>
-            <h2 className="text-title-md font-headline-lg font-bold text-primary truncate">City General</h2>
-            <p className="text-label-sm font-label-sm text-secondary uppercase">AI-Triage Enabled</p>
+            <h2 className="text-title-md font-headline-lg font-bold text-primary truncate">Aarogya Pravah AI</h2>
+            <p className="text-label-sm font-label-sm text-secondary uppercase">
+              {isDoctor ? "Doctor Portal" : "Staff Portal"}
+            </p>
           </div>
         </Link>
 
-        {/* Urgent Action Banner Button */}
-        <Link
-          to="/doctor/dashboard"
-          className="w-full mt-3 bg-error text-on-error py-2 px-3 rounded font-label-sm text-xs flex items-center justify-center space-x-2 hover:bg-error/90 transition-colors shadow-sm"
-        >
-          <span className="material-symbols-outlined text-sm" style={{ fontVariationSettings: "'FILL' 1" }}>
-            warning
+        {/* Status indicator */}
+        <div className="mt-3 bg-surface-container-low border border-outline-variant/60 py-1.5 px-3 rounded text-xs flex items-center justify-between">
+          <span className="text-on-surface-variant font-medium truncate max-w-[130px]">{user?.name || "Dr. Mehta"}</span>
+          <span className="inline-flex items-center gap-1 text-emerald-700 font-semibold font-label-sm text-[11px]">
+            <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
+            Online
           </span>
-          <span>Urgent Action Required</span>
-        </Link>
+        </div>
       </div>
 
       {/* Main Navigation Links */}
@@ -43,86 +43,124 @@ export const Sidebar = ({ activeSection = "live_queue" }) => {
           <>
             <Link
               to="/doctor/dashboard"
-              className={`flex items-center space-x-3 px-4 py-3 rounded-full transition-all text-body-md ${
-                location.pathname === "/doctor/dashboard"
+              className={`flex items-center space-x-3 px-4 py-2.5 rounded-full transition-all text-body-md text-sm ${
+                location.pathname === "/doctor/dashboard" && !location.search.includes("tab=pending")
                   ? "bg-secondary-container text-on-secondary-container font-semibold"
                   : "text-on-surface-variant hover:bg-surface-container-low"
               }`}
             >
-              <span className="material-symbols-outlined">queue</span>
+              <span className="material-symbols-outlined text-xl">stethoscope</span>
+              <span>Doctor Dashboard</span>
+            </Link>
+
+            <Link
+              to="/doctor/dashboard?tab=priority"
+              className={`flex items-center space-x-3 px-4 py-2.5 rounded-full transition-all text-body-md text-sm ${
+                location.pathname === "/doctor/dashboard" && location.search.includes("tab=priority")
+                  ? "bg-secondary-container text-on-secondary-container font-semibold"
+                  : "text-on-surface-variant hover:bg-surface-container-low"
+              }`}
+            >
+              <span className="material-symbols-outlined text-xl">queue</span>
               <span>Waiting Queue</span>
             </Link>
+
             <Link
-              to="/triage-queue"
-              className={`flex items-center space-x-3 px-4 py-3 rounded-full transition-all text-body-md ${
-                location.pathname === "/triage-queue"
+              to="/doctor/dashboard?tab=pending"
+              className={`flex items-center space-x-3 px-4 py-2.5 rounded-full transition-all text-body-md text-sm ${
+                location.pathname === "/doctor/dashboard" && location.search.includes("tab=pending")
                   ? "bg-secondary-container text-on-secondary-container font-semibold"
                   : "text-on-surface-variant hover:bg-surface-container-low"
               }`}
             >
-              <span className="material-symbols-outlined">pending_actions</span>
-              <span>Hospital Queue</span>
+              <span className="material-symbols-outlined text-xl">hourglass_top</span>
+              <span>Pending Queue</span>
             </Link>
+
             <Link
               to="/patient-history"
-              className={`flex items-center space-x-3 px-4 py-3 rounded-full transition-all text-body-md ${
+              className={`flex items-center space-x-3 px-4 py-2.5 rounded-full transition-all text-body-md text-sm ${
                 location.pathname === "/patient-history"
                   ? "bg-secondary-container text-on-secondary-container font-semibold"
                   : "text-on-surface-variant hover:bg-surface-container-low"
               }`}
             >
-              <span className="material-symbols-outlined">person_search</span>
+              <span className="material-symbols-outlined text-xl">folder_shared</span>
               <span>Patient History</span>
+            </Link>
+
+            <Link
+              to="/triage-queue"
+              className={`flex items-center space-x-3 px-4 py-2.5 rounded-full transition-all text-body-md text-sm ${
+                location.pathname === "/triage-queue"
+                  ? "bg-secondary-container text-on-secondary-container font-semibold"
+                  : "text-on-surface-variant hover:bg-surface-container-low"
+              }`}
+            >
+              <span className="material-symbols-outlined text-xl">dashboard</span>
+              <span>Hospital Queue</span>
             </Link>
           </>
         ) : (
           <>
             <Link
               to="/staff/validation"
-              className={`flex items-center space-x-3 px-4 py-3 rounded-full transition-all text-body-md ${
+              className={`flex items-center space-x-3 px-4 py-2.5 rounded-full transition-all text-body-md text-sm ${
                 location.pathname === "/staff/validation" || location.pathname === "/staff/dashboard"
                   ? "bg-secondary-container text-on-secondary-container font-semibold"
                   : "text-on-surface-variant hover:bg-surface-container-low"
               }`}
             >
-              <span className="material-symbols-outlined">how_to_reg</span>
+              <span className="material-symbols-outlined text-xl">how_to_reg</span>
               <span>Validation Queue</span>
             </Link>
             <Link
               to="/triage-queue"
-              className={`flex items-center space-x-3 px-4 py-3 rounded-full transition-all text-body-md ${
+              className={`flex items-center space-x-3 px-4 py-2.5 rounded-full transition-all text-body-md text-sm ${
                 location.pathname === "/triage-queue"
                   ? "bg-secondary-container text-on-secondary-container font-semibold"
                   : "text-on-surface-variant hover:bg-surface-container-low"
               }`}
             >
-              <span className="material-symbols-outlined">clinical_notes</span>
+              <span className="material-symbols-outlined text-xl">clinical_notes</span>
               <span>Live Queue</span>
             </Link>
             <Link
-              to="/staff/profile"
-              className={`flex items-center space-x-3 px-4 py-3 rounded-full transition-all text-body-md ${
-                location.pathname === "/staff/profile"
+              to="/patient-history"
+              className={`flex items-center space-x-3 px-4 py-2.5 rounded-full transition-all text-body-md text-sm ${
+                location.pathname === "/patient-history"
                   ? "bg-secondary-container text-on-secondary-container font-semibold"
                   : "text-on-surface-variant hover:bg-surface-container-low"
               }`}
             >
-              <span className="material-symbols-outlined">groups</span>
-              <span>Staff Profile</span>
+              <span className="material-symbols-outlined text-xl">person_search</span>
+              <span>Patient History</span>
             </Link>
           </>
         )}
 
         <Link
           to="/ai-insights"
-          className={`flex items-center space-x-3 px-4 py-3 rounded-full transition-all text-body-md ${
+          className={`flex items-center space-x-3 px-4 py-2.5 rounded-full transition-all text-body-md text-sm ${
             location.pathname === "/ai-insights"
               ? "bg-secondary-container text-on-secondary-container font-semibold"
               : "text-on-surface-variant hover:bg-surface-container-low"
           }`}
         >
-          <span className="material-symbols-outlined">psychology</span>
+          <span className="material-symbols-outlined text-xl">psychology</span>
           <span>AI Insights</span>
+        </Link>
+
+        <Link
+          to="/staff/profile"
+          className={`flex items-center space-x-3 px-4 py-2.5 rounded-full transition-all text-body-md text-sm ${
+            location.pathname === "/staff/profile"
+              ? "bg-secondary-container text-on-secondary-container font-semibold"
+              : "text-on-surface-variant hover:bg-surface-container-low"
+          }`}
+        >
+          <span className="material-symbols-outlined text-xl">account_circle</span>
+          <span>Profile & Settings</span>
         </Link>
       </div>
 
@@ -130,17 +168,17 @@ export const Sidebar = ({ activeSection = "live_queue" }) => {
       <div className="px-3 pt-4 border-t border-outline-variant space-y-1">
         <Link
           to="/"
-          className="flex items-center space-x-3 px-4 py-2.5 rounded-full text-on-surface-variant hover:bg-surface-container-low transition-all text-body-md text-sm"
+          className="flex items-center space-x-3 px-4 py-2 rounded-full text-on-surface-variant hover:bg-surface-container-low transition-all text-body-md text-xs"
         >
           <span className="material-symbols-outlined text-base">home</span>
-          <span>Patient Portal</span>
+          <span>Public Portal</span>
         </Link>
         <button
           onClick={() => {
             logout();
             navigate("/login");
           }}
-          className="w-full flex items-center space-x-3 px-4 py-2.5 rounded-full text-error hover:bg-error-container/20 transition-all text-body-md text-sm text-left"
+          className="w-full flex items-center space-x-3 px-4 py-2 rounded-full text-error hover:bg-error-container/20 transition-all text-body-md text-xs text-left"
         >
           <span className="material-symbols-outlined text-base">logout</span>
           <span>Logout</span>

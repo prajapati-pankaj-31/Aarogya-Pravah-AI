@@ -2,6 +2,7 @@ import React, { useState, useEffect } from "react";
 import { useSearchParams, useNavigate } from "react-router-dom";
 import Navbar from "../../components/Navbar";
 import appointmentService from "../../services/appointmentService";
+import socketService from "../../services/socketService";
 import useSocket from "../../hooks/useSocket";
 
 export const TrackAppointment = () => {
@@ -13,6 +14,7 @@ export const TrackAppointment = () => {
   const [tokenData, setTokenData] = useState(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+  const [liveAlert, setLiveAlert] = useState("");
 
   const searchToken = async (tokenToQuery) => {
     if (!tokenToQuery.trim()) return;
@@ -23,11 +25,15 @@ export const TrackAppointment = () => {
       const response = await appointmentService.getAppointmentByToken(tokenToQuery);
       if (response.success && response.data) {
         setTokenData(response.data);
+        // Subscribe to private Socket.IO patient room
+        socketService.joinPatient(response.data.tokenNumber);
       } else {
-        setError("Token record not found. Please verify the code on your slip.");
+        setError(response.message || "Token record not found. Please verify the code on your slip.");
+        setTokenData(null);
       }
     } catch (err) {
       setError("Unable to retrieve queue status.");
+      setTokenData(null);
     } finally {
       setLoading(false);
     }
@@ -39,10 +45,26 @@ export const TrackAppointment = () => {
     }
   }, [initialToken]);
 
-  // Real-time socket event listener for queue updates
-  useSocket("queue-updated", (updatedQueue) => {
-    if (tokenData && initialToken) {
-      searchToken(initialToken);
+  // Real-time socket event listeners for patient room
+  useSocket("patient_status_updated", (payload) => {
+    if (tokenData && payload.tokenNumber === tokenData.tokenNumber) {
+      searchToken(tokenData.tokenNumber);
+      if (payload.message) {
+        setLiveAlert(payload.message);
+      }
+    }
+  });
+
+  useSocket("patient_called", (payload) => {
+    if (tokenData && payload.tokenNumber === tokenData.tokenNumber) {
+      searchToken(tokenData.tokenNumber);
+      setLiveAlert(`🔔 Doctor ${payload.doctorName || ""} is calling your token! Please proceed to ${payload.roomNumber || "the consultation room"}.`);
+    }
+  });
+
+  useSocket("queue_updated", () => {
+    if (tokenData) {
+      searchToken(tokenData.tokenNumber);
     }
   });
 
@@ -68,6 +90,18 @@ export const TrackAppointment = () => {
           </p>
         </div>
 
+        {liveAlert && (
+          <div className="mb-6 p-4 bg-primary-container text-on-primary-container rounded-xl border border-primary/30 flex items-center justify-between shadow-md animate-fade-in-up">
+            <div className="flex items-center gap-3">
+              <span className="material-symbols-outlined text-2xl text-primary animate-bounce">campaign</span>
+              <span className="font-body-md font-semibold text-sm">{liveAlert}</span>
+            </div>
+            <button onClick={() => setLiveAlert("")} className="text-on-primary-container hover:opacity-75">
+              <span className="material-symbols-outlined text-lg">close</span>
+            </button>
+          </div>
+        )}
+
         {/* Search Bar */}
         <form onSubmit={handleSubmit} className="bg-surface p-6 rounded-xl border border-outline-variant shadow-sm mb-8">
           <div className="flex flex-col sm:flex-row gap-3">
@@ -77,7 +111,7 @@ export const TrackAppointment = () => {
                 type="text"
                 value={tokenInput}
                 onChange={(e) => setTokenInput(e.target.value)}
-                placeholder="e.g. TKN-042 or T-098"
+                placeholder="e.g. EMG-20260822-4819 or TKN-042"
                 className="w-full pl-10 pr-4 py-3 bg-surface-container-lowest border border-outline-variant rounded font-data-display text-on-surface text-lg uppercase focus:border-primary focus:ring-1 focus:ring-primary"
               />
             </div>
@@ -102,7 +136,7 @@ export const TrackAppointment = () => {
               </div>
               <div className="flex items-center gap-2 bg-primary-container px-3 py-1 rounded-full text-xs font-label-sm">
                 <span className="w-2 h-2 rounded-full bg-emerald-400 animate-ping"></span>
-                <span>Live Status</span>
+                <span>Live Socket Stream</span>
               </div>
             </div>
 
@@ -110,17 +144,27 @@ export const TrackAppointment = () => {
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-6 text-center">
                 <div className="bg-surface-container-low p-4 rounded-lg border border-outline-variant">
                   <p className="text-xs font-label-sm text-secondary uppercase mb-1">Queue Position</p>
-                  <p className="font-display-lg text-display-lg text-primary">{tokenData.queuePosition || "#5"}</p>
+                  <p className="font-display-lg text-display-lg text-primary">{tokenData.queuePosition || "#--"}</p>
                 </div>
                 <div className="bg-surface-container-low p-4 rounded-lg border border-outline-variant">
                   <p className="text-xs font-label-sm text-secondary uppercase mb-1">Estimated Wait</p>
-                  <p className="font-display-lg text-display-lg text-on-surface">{tokenData.estimatedWaitTime || "25 min"}</p>
+                  <p className="font-display-lg text-display-lg text-on-surface">{tokenData.estimatedWaitTime || "Calculating..."}</p>
                 </div>
                 <div className="bg-surface-container-low p-4 rounded-lg border border-outline-variant">
                   <p className="text-xs font-label-sm text-secondary uppercase mb-1">Department</p>
-                  <p className="font-title-md text-title-md text-on-surface font-semibold mt-2">{tokenData.department || "Cardiology"}</p>
+                  <p className="font-title-md text-title-md text-on-surface font-semibold mt-2">{tokenData.department || "General Medicine"}</p>
                 </div>
               </div>
+
+              {tokenData.isPending && (
+                <div className="p-4 bg-amber-50 border border-amber-200 rounded-lg text-amber-800 text-sm">
+                  <div className="flex items-center gap-2 font-semibold">
+                    <span className="material-symbols-outlined text-base">pause_circle</span>
+                    <span>Consultation Temporarily on Hold</span>
+                  </div>
+                  <p className="mt-1 text-xs">{tokenData.pendingReason || "Awaiting laboratory or radiological scan results. You will be prioritized when ready."}</p>
+                </div>
+              )}
 
               {/* Progress Steps */}
               <div className="border-t border-outline-variant pt-6">
@@ -132,27 +176,49 @@ export const TrackAppointment = () => {
                     </div>
                     <div>
                       <p className="font-body-md font-semibold text-on-surface">1. Patient Details Intake</p>
-                      <p className="text-xs text-on-surface-variant">Completed & Registered</p>
+                      <p className="text-xs text-on-surface-variant">Completed & Token Generated</p>
                     </div>
                   </div>
 
                   <div className="flex items-center gap-3">
-                    <div className="w-8 h-8 rounded-full bg-primary text-white flex items-center justify-center animate-pulse">
-                      <span className="material-symbols-outlined text-sm">hourglass_top</span>
+                    <div className={`w-8 h-8 rounded-full flex items-center justify-center ${
+                      tokenData.rawStatus === "PENDING_STAFF_VERIFICATION"
+                        ? "bg-primary text-white animate-pulse"
+                        : "bg-emerald-600 text-white"
+                    }`}>
+                      <span className="material-symbols-outlined text-sm">
+                        {tokenData.rawStatus === "PENDING_STAFF_VERIFICATION" ? "hourglass_top" : "check"}
+                      </span>
                     </div>
                     <div>
-                      <p className="font-body-md font-semibold text-primary">2. Clinical Staff Validation & AI Triage</p>
+                      <p className="font-body-md font-semibold text-primary">2. Clinical Staff Verification & AI Triage</p>
                       <p className="text-xs text-on-surface-variant">Current Status: {tokenData.status}</p>
                     </div>
                   </div>
 
-                  <div className="flex items-center gap-3 opacity-50">
-                    <div className="w-8 h-8 rounded-full bg-surface-container-highest text-on-surface flex items-center justify-center">
-                      <span className="material-symbols-outlined text-sm">stethoscope</span>
+                  <div className={`flex items-center gap-3 ${
+                    tokenData.rawStatus === "IN_CONSULTATION" || tokenData.rawStatus === "COMPLETED" ? "opacity-100" : "opacity-50"
+                  }`}>
+                    <div className={`w-8 h-8 rounded-full flex items-center justify-center ${
+                      tokenData.rawStatus === "COMPLETED"
+                        ? "bg-emerald-600 text-white"
+                        : tokenData.rawStatus === "IN_CONSULTATION"
+                        ? "bg-primary text-white animate-pulse"
+                        : "bg-surface-container-highest text-on-surface"
+                    }`}>
+                      <span className="material-symbols-outlined text-sm">
+                        {tokenData.rawStatus === "COMPLETED" ? "check" : "stethoscope"}
+                      </span>
                     </div>
                     <div>
                       <p className="font-body-md font-semibold text-on-surface">3. Doctor Consultation</p>
-                      <p className="text-xs text-on-surface-variant">Prioritized by AI urgency score</p>
+                      <p className="text-xs text-on-surface-variant">
+                        {tokenData.rawStatus === "COMPLETED"
+                          ? "Consultation completed"
+                          : tokenData.rawStatus === "IN_CONSULTATION"
+                          ? "Doctor is currently consulting with you"
+                          : "Prioritized in dynamic AI queue"}
+                      </p>
                     </div>
                   </div>
                 </div>

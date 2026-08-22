@@ -97,7 +97,6 @@ export const PatientPortal = () => {
 
       if (result.success) {
         setBookingSuccess(result.data || result);
-        // Trigger real-time socket event
         socketService.emit("appointment-created", result.data || result);
       }
     } catch (err) {
@@ -128,22 +127,22 @@ export const PatientPortal = () => {
   };
 
   return (
-    <div className="bg-background text-on-background font-body-md min-h-screen pb-20 md:pb-0">
+    <div className="bg-background text-on-background font-body-md min-h-screen pb-20 md:pb-0 w-full max-w-full overflow-x-hidden">
       <Navbar />
 
       {/* Main Layout */}
-      <main className="max-w-container-max mx-auto px-margin-mobile md:px-margin-desktop py-8 flex flex-col gap-gutter">
+      <main className="w-full max-w-container-max mx-auto px-4 sm:px-6 md:px-8 py-6 md:py-8 flex flex-col gap-6 md:gap-gutter">
         {/* Hero Section */}
-        <section className="bg-primary text-on-primary rounded-xl p-8 relative overflow-hidden shadow-sm">
+        <section className="bg-primary text-on-primary rounded-xl p-6 sm:p-8 relative overflow-hidden shadow-sm w-full max-w-full">
           <div className="absolute inset-0 opacity-10 bg-[radial-gradient(ellipse_at_top_right,_var(--tw-gradient-stops))] from-white via-transparent to-transparent pointer-events-none"></div>
           <div className="relative z-10 max-w-2xl">
-            <h2 className="font-display-lg text-display-lg mb-4">Welcome to SmartQueue AI</h2>
-            <p className="font-body-lg text-body-lg mb-8 opacity-90">
+            <h2 className="font-display-lg text-2xl sm:text-display-lg mb-3 sm:mb-4">Welcome to Aarogya Pravah AI</h2>
+            <p className="font-body-lg text-sm sm:text-body-lg mb-6 sm:mb-8 opacity-90">
               Our AI-powered triage system ensures you get the right care, faster. Book your appointment or track your real-time status below.
             </p>
             <a
               href="#appointment-form"
-              className="inline-flex items-center gap-2 bg-surface text-primary hover:bg-surface-container-highest px-6 py-3 rounded-lg font-title-md text-title-md shadow-md transition-all active:scale-95"
+              className="inline-flex items-center gap-2 bg-surface text-primary hover:bg-surface-container-highest px-5 sm:px-6 py-2.5 sm:py-3 rounded-lg font-title-md text-sm sm:text-title-md shadow-md transition-all active:scale-95"
             >
               <span className="material-symbols-outlined" style={{ fontVariationSettings: "'FILL' 1" }}>
                 calendar_add_on
@@ -155,28 +154,28 @@ export const PatientPortal = () => {
 
         {/* Success Modal / Banner if booked */}
         {bookingSuccess && (
-          <div className="bg-surface-container-low border-2 border-primary rounded-xl p-6 shadow-md animate-fade-in-up flex flex-col md:flex-row items-center justify-between gap-4">
-            <div className="flex items-center gap-4">
-              <div className="w-12 h-12 rounded-full bg-primary text-on-primary flex items-center justify-center">
+          <div className="w-full max-w-full bg-surface-container-low border-2 border-primary rounded-xl p-4 sm:p-6 shadow-md animate-fade-in-up flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
+            <div className="flex items-center gap-4 min-w-0">
+              <div className="w-12 h-12 rounded-full bg-primary text-on-primary flex items-center justify-center shrink-0">
                 <span className="material-symbols-outlined text-2xl">check_circle</span>
               </div>
-              <div>
+              <div className="min-w-0">
                 <h3 className="text-title-md font-headline-lg font-bold text-primary">Appointment Booked Successfully!</h3>
-                <p className="text-body-md text-on-surface-variant">
+                <p className="text-body-md text-on-surface-variant text-sm sm:text-base">
                   Your Token is <span className="font-data-display font-bold text-primary text-lg">{bookingSuccess.tokenNumber}</span>. Estimated Wait: {bookingSuccess.estimatedWaitTime || "30 min"}
                 </p>
               </div>
             </div>
-            <div className="flex gap-2">
+            <div className="flex gap-2 shrink-0 w-full md:w-auto">
               <button
                 onClick={() => navigate(`/token/${bookingSuccess.tokenNumber}`)}
-                className="px-4 py-2 bg-primary text-on-primary rounded font-label-sm hover:bg-on-primary-fixed-variant transition-colors"
+                className="flex-1 md:flex-none px-4 py-2 bg-primary text-on-primary rounded font-label-sm hover:bg-on-primary-fixed-variant transition-colors text-center"
               >
                 View Live Token
               </button>
               <button
                 onClick={() => setBookingSuccess(null)}
-                className="px-4 py-2 border border-outline-variant text-on-surface-variant rounded font-label-sm hover:bg-surface-container transition-colors"
+                className="flex-1 md:flex-none px-4 py-2 border border-outline-variant text-on-surface-variant rounded font-label-sm hover:bg-surface-container transition-colors text-center"
               >
                 Dismiss
               </button>
@@ -184,19 +183,20 @@ export const PatientPortal = () => {
           </div>
         )}
 
-        <div className="grid grid-cols-1 md:grid-cols-12 gap-gutter">
-          {/* Appointment Form Column (8 cols) */}
-          <div className="md:col-span-8 space-y-6" id="appointment-form">
-            <div className="bg-surface rounded-xl border border-outline-variant p-6 shadow-sm relative z-0">
-              <h3 className="font-headline-lg text-headline-lg text-on-surface mb-6 border-b border-outline-variant pb-4 flex items-center gap-2">
+        {/* Two-Column Responsive Grid: 2-Cols on Desktop (lg:), 1-Col Stacked on Mobile & Tablet (<lg:) */}
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 xl:gap-gutter w-full max-w-full items-start">
+          {/* Appointment Form Column (8 cols on lg, full width on mobile/tablet) */}
+          <div className="lg:col-span-8 space-y-6 w-full max-w-full min-w-0" id="appointment-form">
+            <div className="bg-surface rounded-xl border border-outline-variant p-5 sm:p-6 shadow-sm relative z-0 w-full max-w-full box-border">
+              <h3 className="font-headline-lg text-lg sm:text-headline-lg text-on-surface mb-5 sm:mb-6 border-b border-outline-variant pb-3 sm:pb-4 flex items-center gap-2">
                 <span className="material-symbols-outlined text-primary">edit_document</span>
                 Patient Details Entry
               </h3>
 
-              <form onSubmit={handleSubmit} className="space-y-5">
+              <form onSubmit={handleSubmit} className="space-y-5 w-full max-w-full">
                 {/* Personal Info Row */}
-                <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                  <div className="space-y-1.5">
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-4 w-full">
+                  <div className="space-y-1.5 min-w-0">
                     <label className="block font-label-sm text-label-sm text-on-surface-variant">Full Name *</label>
                     <input
                       type="text"
@@ -204,10 +204,10 @@ export const PatientPortal = () => {
                       placeholder="e.g. John Doe"
                       value={formData.patient.fullName}
                       onChange={(e) => handleInputChange("patient", "fullName", e.target.value)}
-                      className="w-full bg-surface-container-lowest border border-outline-variant rounded-md px-4 py-2 text-on-surface font-body-md focus:border-primary focus:ring-1 focus:ring-primary"
+                      className="w-full bg-surface-container-lowest border border-outline-variant rounded-md px-3 sm:px-4 py-2 text-on-surface font-body-md focus:border-primary focus:ring-1 focus:ring-primary box-border"
                     />
                   </div>
-                  <div className="space-y-1.5">
+                  <div className="space-y-1.5 min-w-0">
                     <label className="block font-label-sm text-label-sm text-on-surface-variant">Age *</label>
                     <input
                       type="number"
@@ -217,10 +217,10 @@ export const PatientPortal = () => {
                       placeholder="e.g. 42"
                       value={formData.patient.age}
                       onChange={(e) => handleInputChange("patient", "age", e.target.value)}
-                      className="w-full bg-surface-container-lowest border border-outline-variant rounded-md px-4 py-2 text-on-surface font-body-md focus:border-primary focus:ring-1 focus:ring-primary"
+                      className="w-full bg-surface-container-lowest border border-outline-variant rounded-md px-3 sm:px-4 py-2 text-on-surface font-body-md focus:border-primary focus:ring-1 focus:ring-primary box-border"
                     />
                   </div>
-                  <div className="space-y-1.5">
+                  <div className="space-y-1.5 min-w-0">
                     <label className="block font-label-sm text-label-sm text-on-surface-variant">Contact Number *</label>
                     <input
                       type="tel"
@@ -228,19 +228,19 @@ export const PatientPortal = () => {
                       placeholder="+1 (555) 000-0000"
                       value={formData.patient.contact}
                       onChange={(e) => handleInputChange("patient", "contact", e.target.value)}
-                      className="w-full bg-surface-container-lowest border border-outline-variant rounded-md px-4 py-2 text-on-surface font-body-md focus:border-primary focus:ring-1 focus:ring-primary"
+                      className="w-full bg-surface-container-lowest border border-outline-variant rounded-md px-3 sm:px-4 py-2 text-on-surface font-body-md focus:border-primary focus:ring-1 focus:ring-primary box-border"
                     />
                   </div>
                 </div>
 
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-5 w-full">
                   {/* Department */}
-                  <div className="space-y-1.5">
+                  <div className="space-y-1.5 min-w-0">
                     <label className="block font-label-sm text-label-sm text-on-surface-variant">Department *</label>
                     <select
                       value={formData.appointment.department}
                       onChange={(e) => handleInputChange("appointment", "department", e.target.value)}
-                      className="w-full bg-surface-container-lowest border border-outline-variant rounded-md px-4 py-2 focus:border-primary focus:ring-1 focus:ring-primary text-on-surface font-body-md transition-colors"
+                      className="w-full bg-surface-container-lowest border border-outline-variant rounded-md px-3 sm:px-4 py-2 focus:border-primary focus:ring-1 focus:ring-primary text-on-surface font-body-md transition-colors box-border"
                     >
                       <option value="Cardiology">Cardiology</option>
                       <option value="Neurology">Neurology</option>
@@ -251,12 +251,12 @@ export const PatientPortal = () => {
                   </div>
 
                   {/* Severity */}
-                  <div className="space-y-1.5">
+                  <div className="space-y-1.5 min-w-0">
                     <label className="block font-label-sm text-label-sm text-on-surface-variant">Self-Assessed Severity</label>
                     <select
                       value={formData.appointment.severity}
                       onChange={(e) => handleInputChange("appointment", "severity", e.target.value)}
-                      className="w-full bg-surface-container-lowest border border-outline-variant rounded-md px-4 py-2 focus:border-primary focus:ring-1 focus:ring-primary text-on-surface font-body-md transition-colors"
+                      className="w-full bg-surface-container-lowest border border-outline-variant rounded-md px-3 sm:px-4 py-2 focus:border-primary focus:ring-1 focus:ring-primary text-on-surface font-body-md transition-colors box-border"
                     >
                       <option value="Easy">Easy (Routine checkup)</option>
                       <option value="Medium">Medium (Discomfort, non-urgent)</option>
@@ -266,7 +266,7 @@ export const PatientPortal = () => {
                 </div>
 
                 {/* Symptoms */}
-                <div className="space-y-1.5 relative">
+                <div className="space-y-1.5 relative w-full">
                   <label className="block font-label-sm text-label-sm text-on-surface-variant">Symptoms *</label>
                   <textarea
                     rows={3}
@@ -274,33 +274,33 @@ export const PatientPortal = () => {
                     value={formData.appointment.symptoms}
                     onChange={(e) => handleInputChange("appointment", "symptoms", e.target.value)}
                     placeholder="Describe how you are feeling (e.g., severe chest pain radiating to left arm, shortness of breath)..."
-                    className="w-full bg-surface-container-lowest border border-outline-variant rounded-md px-4 py-2 focus:border-primary focus:ring-1 focus:ring-primary text-on-surface font-body-md transition-colors"
+                    className="w-full bg-surface-container-lowest border border-outline-variant rounded-md px-3 sm:px-4 py-2 focus:border-primary focus:ring-1 focus:ring-primary text-on-surface font-body-md transition-colors box-border"
                   ></textarea>
-                  <div className="absolute right-2 bottom-3 text-xs text-on-surface-variant opacity-70 flex items-center gap-1">
+                  <div className="absolute right-2 bottom-3 text-xs text-on-surface-variant opacity-70 flex items-center gap-1 pointer-events-none">
                     <span className="material-symbols-outlined text-[16px] text-primary">auto_awesome</span>
-                    AI Assisted Extraction
+                    <span className="hidden sm:inline">AI Assisted Extraction</span>
                   </div>
                 </div>
 
                 {/* Possible Disease (AI Ghost Text) */}
-                <div className="space-y-1.5">
+                <div className="space-y-1.5 w-full">
                   <label className="block font-label-sm text-label-sm text-on-surface-variant">AI Suggested Condition (Preliminary Extraction)</label>
                   <input
                     type="text"
                     disabled
                     value={getAiSuggestedCondition(formData.appointment.symptoms)}
-                    className="w-full bg-surface-container-low border border-outline-variant border-dashed rounded-md px-4 py-2 text-primary font-medium font-body-md focus:outline-none"
+                    className="w-full bg-surface-container-low border border-outline-variant border-dashed rounded-md px-3 sm:px-4 py-2 text-primary font-medium font-body-md focus:outline-none box-border"
                   />
                 </div>
 
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-5 items-start">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-5 items-start w-full">
                   {/* Accidental Case Toggle */}
-                  <div className="bg-surface-container-low p-4 rounded-lg border border-outline-variant flex items-center justify-between">
+                  <div className="bg-surface-container-low p-4 rounded-lg border border-outline-variant flex items-center justify-between min-w-0">
                     <div>
-                      <p className="font-title-md text-[16px] text-on-surface">Accidental Case?</p>
-                      <p className="text-xs text-on-surface-variant mt-1">Check if related to a physical trauma or injury.</p>
+                      <p className="font-title-md text-[15px] sm:text-[16px] text-on-surface">Accidental Case?</p>
+                      <p className="text-xs text-on-surface-variant mt-0.5">Check if related to trauma or injury.</p>
                     </div>
-                    <label className="relative inline-flex items-center cursor-pointer">
+                    <label className="relative inline-flex items-center cursor-pointer shrink-0 ml-3">
                       <input
                         type="checkbox"
                         checked={formData.appointment.isAccidentalCase}
@@ -312,12 +312,12 @@ export const PatientPortal = () => {
                   </div>
 
                   {/* X-Ray Upload */}
-                  <label className="border-2 border-dashed border-outline-variant rounded-lg p-4 flex flex-col items-center justify-center text-center hover:bg-surface-container-low transition-colors cursor-pointer group relative">
+                  <label className="border-2 border-dashed border-outline-variant rounded-lg p-4 flex flex-col items-center justify-center text-center hover:bg-surface-container-low transition-colors cursor-pointer group relative min-w-0">
                     <input type="file" accept="image/*,.pdf" onChange={handleFileChange} className="sr-only" />
                     <span className="material-symbols-outlined text-outline-variant group-hover:text-primary text-3xl mb-1 transition-colors">
                       upload_file
                     </span>
-                    <p className="font-label-sm text-label-sm text-on-surface-variant font-medium">
+                    <p className="font-label-sm text-label-sm text-on-surface-variant font-medium truncate max-w-full">
                       {selectedFile ? selectedFile.name : "Upload X-Ray / Documents"}
                     </p>
                     <p className="text-[10px] text-outline">JPG, PNG, DICOM, PDF (Max 10MB)</p>
@@ -327,11 +327,11 @@ export const PatientPortal = () => {
                   </label>
                 </div>
 
-                <div className="pt-4 flex justify-end">
+                <div className="pt-4 flex justify-end w-full">
                   <button
                     type="submit"
                     disabled={isSubmitting}
-                    className="bg-primary text-on-primary hover:bg-on-primary-fixed-variant px-8 py-2.5 rounded-md font-title-md text-[16px] shadow-sm transition-all active:scale-95 flex items-center gap-2"
+                    className="w-full sm:w-auto bg-primary text-on-primary hover:bg-on-primary-fixed-variant px-8 py-2.5 rounded-md font-title-md text-[16px] shadow-sm transition-all active:scale-95 flex items-center justify-center gap-2"
                   >
                     {isSubmitting ? (
                       <span>Generating Token...</span>
@@ -347,24 +347,24 @@ export const PatientPortal = () => {
             </div>
           </div>
 
-          {/* Track Status Column (4 cols) */}
-          <div className="md:col-span-4 space-y-6">
-            <div className="bg-surface rounded-xl border border-outline-variant p-6 shadow-sm sticky top-24">
-              <h3 className="font-headline-lg text-headline-lg text-on-surface mb-6 border-b border-outline-variant pb-4 flex items-center gap-2">
+          {/* Track Status Column (4 cols on lg, full width on mobile/tablet) */}
+          <div className="lg:col-span-4 space-y-6 w-full max-w-full min-w-0">
+            <div className="bg-surface rounded-xl border border-outline-variant p-5 sm:p-6 shadow-sm lg:sticky lg:top-24 w-full max-w-full box-border">
+              <h3 className="font-headline-lg text-lg sm:text-headline-lg text-on-surface mb-5 sm:mb-6 border-b border-outline-variant pb-3 sm:pb-4 flex items-center gap-2">
                 <span className="material-symbols-outlined text-primary">radar</span>
                 Live Queue Status
               </h3>
 
-              <form onSubmit={handleTokenSearch} className="space-y-4">
-                <div className="relative">
+              <form onSubmit={handleTokenSearch} className="space-y-4 w-full max-w-full">
+                <div className="relative w-full">
                   <input
                     type="text"
                     value={searchToken}
                     onChange={(e) => setSearchToken(e.target.value)}
                     placeholder="Enter Token (e.g. TKN-042)"
-                    className="w-full bg-surface-container-lowest border-2 border-outline-variant rounded-md pl-10 pr-4 py-3 text-lg font-data-display text-on-surface focus:border-primary focus:ring-1 focus:ring-primary transition-all uppercase placeholder:normal-case placeholder:font-body-md placeholder:text-sm"
+                    className="w-full bg-surface-container-lowest border-2 border-outline-variant rounded-md pl-10 pr-4 py-2.5 sm:py-3 text-base sm:text-lg font-data-display text-on-surface focus:border-primary focus:ring-1 focus:ring-primary transition-all uppercase placeholder:normal-case placeholder:font-body-md placeholder:text-sm box-border"
                   />
-                  <span className="material-symbols-outlined absolute left-3 top-3.5 text-outline-variant">
+                  <span className="material-symbols-outlined absolute left-3 top-3 sm:top-3.5 text-outline-variant">
                     search
                   </span>
                 </div>
@@ -379,7 +379,7 @@ export const PatientPortal = () => {
               </form>
 
               {/* Status Display Card */}
-              <div className="mt-8 border border-outline-variant rounded-lg overflow-hidden">
+              <div className="mt-6 sm:mt-8 border border-outline-variant rounded-lg overflow-hidden w-full max-w-full">
                 <div className="bg-surface-container-low px-4 py-2.5 border-b border-outline-variant flex justify-between items-center">
                   <span className="font-data-display font-bold text-sm text-primary">{searchedData.tokenNumber}</span>
                   <span className="flex h-2.5 w-2.5 relative">
@@ -391,13 +391,13 @@ export const PatientPortal = () => {
                   <div className="flex justify-between items-end border-b border-surface-dim pb-3">
                     <div>
                       <p className="text-xs text-on-surface-variant uppercase font-label-sm tracking-wider mb-1">Est. Wait Time</p>
-                      <p className="font-display-lg text-display-lg text-on-surface leading-none">
+                      <p className="font-display-lg text-2xl sm:text-display-lg text-on-surface leading-none">
                         {searchedData.waitTime}
                       </p>
                     </div>
                     <div className="text-right">
                       <p className="text-xs text-on-surface-variant uppercase font-label-sm tracking-wider mb-1">Queue Pos.</p>
-                      <p className="font-headline-lg text-headline-lg text-primary">{searchedData.queuePosition}</p>
+                      <p className="font-headline-lg text-xl sm:text-headline-lg text-primary">{searchedData.queuePosition}</p>
                     </div>
                   </div>
                   <div className="pt-2">

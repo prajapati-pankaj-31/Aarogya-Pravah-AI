@@ -11,7 +11,7 @@ export const Loading = ({ text = "Loading clinical intelligence..." }) => {
       </div>
       <p className="font-body-md text-on-surface-variant font-medium">{text}</p>
       <span className="font-label-sm text-xs text-outline mt-1 uppercase tracking-wider">
-        SmartQueue AI Engine
+        Aarogya Pravah AI Engine
       </span>
     </div>
   );
