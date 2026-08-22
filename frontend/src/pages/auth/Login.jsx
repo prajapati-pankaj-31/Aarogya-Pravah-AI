@@ -34,7 +34,8 @@ export const Login = ({ initialRole = "doctor" }) => {
       });
 
       if (res.success) {
-        const redirectPath = role === "doctor" ? "/doctor/dashboard" : "/staff/validation";
+        const userRole = (res.user?.role || role).toLowerCase();
+        const redirectPath = userRole === "doctor" ? "/doctor/dashboard" : "/staff/validation";
         navigate(location.state?.from?.pathname || redirectPath, { replace: true });
       } else {
         setError(res.message || "Invalid credentials.");
@@ -59,7 +60,7 @@ export const Login = ({ initialRole = "doctor" }) => {
               >
                 local_hospital
               </span>
-              <h1 className="font-headline-lg text-headline-lg text-primary m-0">City General Hospital</h1>
+              <h1 className="font-headline-lg text-headline-lg text-primary m-0">Aarogya Pravah AI</h1>
             </div>
             <div className="inline-flex items-center gap-1.5 bg-secondary-container text-on-secondary-container px-3 py-1 rounded-full w-max mt-2 shadow-[0_2px_4px_rgba(0,0,0,0.02)]">
               <span className="material-symbols-outlined text-[16px]">psychology</span>
@@ -69,7 +70,7 @@ export const Login = ({ initialRole = "doctor" }) => {
 
           <div className="relative z-10 mt-auto pb-4">
             <p className="font-body-lg text-body-lg text-on-surface-variant max-w-[280px]">
-              Secure access to the SmartQueue AI platform. Optimizing patient flow and triage accuracy.
+              Secure access to the Aarogya Pravah AI platform. Optimizing patient flow and triage accuracy.
             </p>
           </div>
 
@@ -100,7 +101,7 @@ export const Login = ({ initialRole = "doctor" }) => {
             >
               local_hospital
             </span>
-            <h1 className="font-headline-lg-mobile text-headline-lg-mobile text-primary m-0">City General Hospital</h1>
+            <h1 className="font-headline-lg-mobile text-headline-lg-mobile text-primary m-0">Aarogya Pravah AI</h1>
             <span className="font-label-sm text-label-sm text-on-surface-variant bg-surface-container py-1 px-3 rounded-full mt-1">
               AI-Triage Enabled
             </span>

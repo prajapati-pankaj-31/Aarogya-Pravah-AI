@@ -41,10 +41,22 @@ export const TriageQueue = () => {
     fetchLiveQueue();
   }, [departmentFilter]);
 
+  useSocket("queue_updated", () => {
+    fetchLiveQueue();
+  });
   useSocket("queue-updated", () => {
     fetchLiveQueue();
   });
-  useSocket("appointment-created", () => {
+  useSocket("new_patient", () => {
+    fetchLiveQueue();
+  });
+  useSocket("patient_verified", () => {
+    fetchLiveQueue();
+  });
+  useSocket("priority_updated", () => {
+    fetchLiveQueue();
+  });
+  useSocket("patient_completed", () => {
     fetchLiveQueue();
   });
 

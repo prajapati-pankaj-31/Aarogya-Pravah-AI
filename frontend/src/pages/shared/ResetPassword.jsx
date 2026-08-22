@@ -55,7 +55,7 @@ export const ResetPassword = () => {
                 local_hospital
               </span>
               <h1 className="font-display-lg text-display-lg text-primary font-bold tracking-tight">
-                City General Hospital
+                Aarogya Pravah AI
               </h1>
             </div>
 
@@ -67,7 +67,7 @@ export const ResetPassword = () => {
               </div>
               <h2 className="font-headline-lg text-headline-lg text-on-surface mb-4">Account Access Protocol</h2>
               <p className="font-body-lg text-body-lg text-on-surface-variant leading-relaxed">
-                For the protection of sensitive patient records and hospital systems, SmartQueue Clinical AI requires verified staff credentials for all password resets. Follow the secure recovery steps to regain access to your clinical dashboard.
+                For the protection of sensitive patient records and hospital systems, Aarogya Pravah AI requires verified staff credentials for all password resets. Follow the secure recovery steps to regain access to your clinical dashboard.
               </p>
             </div>
 
@@ -90,7 +90,7 @@ export const ResetPassword = () => {
               >
                 local_hospital
               </span>
-              <span className="font-title-md text-title-md text-primary font-bold">SmartQueue AI</span>
+              <span className="font-title-md text-title-md text-primary font-bold">Aarogya Pravah AI</span>
             </div>
 
             {/* Header */}
@@ -98,8 +98,8 @@ export const ResetPassword = () => {
               <h2 className="font-display-lg text-headline-lg-mobile md:text-display-lg text-on-surface mb-2 font-bold">
                 Forgot Password
               </h2>
-              <p className="font-body-md text-body-md text-on-surface-variant">
-                Enter your credentials to initiate a secure password reset sequence.
+              <p className="font-body-lg text-body-lg text-on-surface-variant">
+                Enter your registered institutional email to initiate secure recovery.
               </p>
             </div>
 
@@ -118,45 +118,32 @@ export const ResetPassword = () => {
             {/* Form */}
             <form onSubmit={handleSubmit} className="space-y-6">
               <div>
-                <label className="block font-label-sm text-label-sm text-on-surface mb-2 uppercase" htmlFor="identifier">
-                  Hospital Email or Staff ID
+                <label className="block font-body-md text-body-md text-on-surface mb-2 font-medium">
+                  Staff Email
                 </label>
                 <div className="relative">
-                  <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                    <span className={`material-symbols-outlined ${isFocused ? "text-primary" : "text-outline"}`}>
-                      badge
-                    </span>
-                  </div>
+                  <span className="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-on-surface-variant text-xl">
+                    mail
+                  </span>
                   <input
-                    id="identifier"
-                    name="identifier"
-                    type="text"
+                    type="email"
                     required
                     value={identifier}
                     onChange={(e) => setIdentifier(e.target.value)}
-                    onFocus={() => setIsFocused(true)}
-                    onBlur={() => setIsFocused(false)}
-                    placeholder="e.g. staff.name@citygeneral.org"
-                    className="clinical-input block w-full pl-10 pr-3 py-3 font-body-md text-body-md text-on-surface"
+                    placeholder="dr.smith@hospital.org"
+                    className="input-field w-full pl-10 pr-4 py-3 bg-surface-container-low border border-outline-variant rounded-lg font-body-lg text-body-lg focus:outline-none focus:border-primary text-on-surface transition-colors"
                   />
                 </div>
               </div>
 
-              {/* Action Buttons */}
-              <div className="pt-4 flex flex-col gap-4">
+              <div className="space-y-3 pt-2">
                 <button
                   type="submit"
                   disabled={loading}
-                  className="btn-primary w-full flex justify-center items-center py-3 px-4 font-body-lg text-body-lg font-semibold shadow-sm"
+                  className="btn-primary w-full flex justify-center items-center py-3 px-4 rounded-lg font-body-lg text-body-lg font-semibold shadow-sm transition-all"
                 >
-                  {loading ? (
-                    "Sending Reset Link..."
-                  ) : (
-                    <>
-                      Send Reset Link
-                      <span className="material-symbols-outlined ml-2 text-on-primary text-xl">arrow_forward</span>
-                    </>
-                  )}
+                  <span className="material-symbols-outlined mr-2 text-xl">lock_reset</span>
+                  {loading ? "Verifying..." : "Send Recovery Link"}
                 </button>
                 <Link
                   to="/login"
@@ -176,7 +163,7 @@ export const ResetPassword = () => {
                   Contact IT Support
                 </a>
               </p>
-              <p className="font-label-sm text-label-sm text-outline mt-2 uppercase">SmartQueue Clinical AI v2.4.1</p>
+              <p className="font-label-sm text-label-sm text-outline mt-2 uppercase">Aarogya Pravah AI v2.4.1</p>
             </div>
           </div>
         </section>

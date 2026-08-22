@@ -13,6 +13,8 @@ export const StaffValidation = () => {
   const [loading, setLoading] = useState(true);
   const [modalImage, setModalImage] = useState(null);
   const [actionSuccess, setActionSuccess] = useState("");
+  const [selectedSeverity, setSelectedSeverity] = useState("HIGH");
+  const [verificationNotes, setVerificationNotes] = useState("");
 
   const loadData = async () => {
     try {
@@ -25,6 +27,7 @@ export const StaffValidation = () => {
         setPatients(patientsRes.data);
         if (patientsRes.data.length > 0) {
           setSelectedPatient(patientsRes.data[0]);
+          setSelectedSeverity(patientsRes.data[0].reportedSeverity || "HIGH");
         }
       }
 
@@ -37,42 +40,64 @@ export const StaffValidation = () => {
   };
 
   useEffect(() => {
+    socketService.joinStaff();
     loadData();
   }, []);
 
+  // Sync selectedSeverity when active patient changes
+  useEffect(() => {
+    if (selectedPatient) {
+      setSelectedSeverity(selectedPatient.reportedSeverity || "HIGH");
+      setVerificationNotes(`Staff verified intake symptoms: ${selectedPatient.symptoms}`);
+    }
+  }, [selectedPatient?.id]);
+
   // Listen for real-time appointments arriving
-  useSocket("appointment-created", (newAppointment) => {
+  useSocket("new_patient", (payload) => {
+    const appt = payload.appointment || payload;
+    const dept = appt.department || "General Medicine";
+    const token = appt.tokenNumber || "New Token";
+
     setNotifications((prev) => [
       {
         id: "notif-" + Date.now(),
         type: "new_request",
-        title: `New Request: ${newAppointment.appointment?.department || "General"}`,
-        message: `Token #${newAppointment.tokenNumber} just arrived.`,
+        title: `New Patient Intake: ${dept}`,
+        message: `Token #${token} just registered for check-in.`,
         time: "Just now",
         unread: true
       },
       ...prev
     ]);
+
+    // Refresh pending verifications list
+    loadData();
   });
 
   const handleValidate = async () => {
     if (!selectedPatient) return;
     try {
-      await staffService.validatePatient(selectedPatient.id, {
-        suggestedDisease: selectedPatient.aiPreliminary?.suggestedDisease,
-        urgencyScore: selectedPatient.aiPreliminary?.urgencyScore
+      const result = await staffService.validatePatient(selectedPatient.id, {
+        staffSeverity: selectedSeverity,
+        verificationNotes,
+        isAccident: selectedPatient.isAccidentalCase,
+        accidentSeverity: selectedPatient.accidentSeverity,
+        department: selectedPatient.department
       });
 
-      socketService.emit("appointment-validated", {
-        patientId: selectedPatient.id,
-        tokenNumber: selectedPatient.tokenNumber
-      });
+      if (result.success) {
+        const priorityScore = result.data?.queueEntry?.priorityScore || result.data?.priorityResult?.priorityScore || 85;
+        const urgencyLevel = result.data?.aiAnalysis?.urgencyLevel || selectedSeverity;
 
-      setActionSuccess(`Patient ${selectedPatient.fullName} (${selectedPatient.tokenNumber}) validated and sent to AI Triage layer!`);
-      // Advance to next patient
-      const remaining = patients.filter((p) => p.id !== selectedPatient.id);
-      setPatients(remaining);
-      setSelectedPatient(remaining.length > 0 ? remaining[0] : null);
+        setActionSuccess(
+          `✓ Patient ${selectedPatient.fullName} (${selectedPatient.tokenNumber}) verified! Groq AI Score: ${priorityScore}/100 (${urgencyLevel}). Placed in dynamic priority queue.`
+        );
+
+        // Advance to next patient
+        const remaining = patients.filter((p) => p.id !== selectedPatient.id);
+        setPatients(remaining);
+        setSelectedPatient(remaining.length > 0 ? remaining[0] : null);
+      }
     } catch (err) {
       console.error(err);
     }
@@ -81,13 +106,13 @@ export const StaffValidation = () => {
   const handleHold = async () => {
     if (!selectedPatient) return;
     try {
-      await staffService.holdPatient(selectedPatient.id, "Need additional lab reports");
-      socketService.emit("patient-on-hold", { patientId: selectedPatient.id });
-
-      setActionSuccess(`Patient ${selectedPatient.fullName} placed on hold.`);
-      const remaining = patients.filter((p) => p.id !== selectedPatient.id);
-      setPatients(remaining);
-      setSelectedPatient(remaining.length > 0 ? remaining[0] : null);
+      const res = await staffService.holdPatient(selectedPatient.id, "Please visit counter with ID and past medical documentation");
+      if (res.success) {
+        setActionSuccess(`Patient ${selectedPatient.fullName} flagged for front-desk clarification.`);
+        const remaining = patients.filter((p) => p.id !== selectedPatient.id);
+        setPatients(remaining);
+        setSelectedPatient(remaining.length > 0 ? remaining[0] : null);
+      }
     } catch (err) {
       console.error(err);
     }
@@ -96,13 +121,13 @@ export const StaffValidation = () => {
   const handleReject = async () => {
     if (!selectedPatient) return;
     try {
-      await staffService.rejectPatient(selectedPatient.id, "Incomplete vitals");
-      socketService.emit("appointment-rejected", { patientId: selectedPatient.id });
-
-      setActionSuccess(`Patient ${selectedPatient.fullName} rejected.`);
-      const remaining = patients.filter((p) => p.id !== selectedPatient.id);
-      setPatients(remaining);
-      setSelectedPatient(remaining.length > 0 ? remaining[0] : null);
+      const res = await staffService.rejectPatient(selectedPatient.id, "Duplicate booking or invalid patient verification");
+      if (res.success) {
+        setActionSuccess(`Patient ${selectedPatient.fullName} appointment cancelled.`);
+        const remaining = patients.filter((p) => p.id !== selectedPatient.id);
+        setPatients(remaining);
+        setSelectedPatient(remaining.length > 0 ? remaining[0] : null);
+      }
     } catch (err) {
       console.error(err);
     }
@@ -117,7 +142,7 @@ export const StaffValidation = () => {
       <main className="flex-1 flex flex-col h-full overflow-hidden md:ml-64">
         {/* TopAppBar Mobile */}
         <header className="md:hidden flex justify-between items-center w-full px-margin-mobile h-16 bg-surface border-b border-outline-variant flex-shrink-0">
-          <h1 className="text-title-md font-headline-lg font-bold text-primary">SmartQueue AI</h1>
+          <h1 className="text-title-md font-headline-lg font-bold text-primary">Aarogya Pravah AI</h1>
           <div className="flex items-center gap-4">
             <button className="text-on-surface-variant">
               <span className="material-symbols-outlined">notifications</span>
@@ -130,7 +155,7 @@ export const StaffValidation = () => {
 
         {/* Action feedback toast */}
         {actionSuccess && (
-          <div className="bg-emerald-600 text-white px-6 py-2.5 text-sm flex items-center justify-between shadow-md">
+          <div className="bg-emerald-600 text-white px-6 py-2.5 text-sm flex items-center justify-between shadow-md animate-fade-in-up">
             <span>{actionSuccess}</span>
             <button onClick={() => setActionSuccess("")} className="text-white hover:opacity-80">
               <span className="material-symbols-outlined text-base">close</span>
@@ -191,8 +216,8 @@ export const StaffValidation = () => {
                   ) : (
                     patients.map((patient) => {
                       const isSelected = selectedPatient?.id === patient.id;
-                      const isHigh = patient.reportedSeverity === "High" || patient.aiPreliminary?.urgencyScore >= 80;
-                      const isMedium = patient.reportedSeverity === "Medium" || (patient.aiPreliminary?.urgencyScore >= 50 && patient.aiPreliminary?.urgencyScore < 80);
+                      const isHigh = patient.reportedSeverity === "HIGH" || patient.reportedSeverity === "High" || patient.reportedSeverity === "CRITICAL";
+                      const isMedium = patient.reportedSeverity === "MEDIUM" || patient.reportedSeverity === "Medium";
 
                       return (
                         <div
@@ -247,7 +272,7 @@ export const StaffValidation = () => {
                         Patient Details
                       </h2>
                       <span className="bg-secondary-container text-on-secondary-container text-label-sm text-xs px-3 py-1 rounded-full font-medium">
-                        Validating
+                        Validating Intake
                       </span>
                     </div>
                     <div className="text-right">
@@ -336,44 +361,68 @@ export const StaffValidation = () => {
                         </div>
                       </div>
 
+                      {/* Clinical Staff Severity Override Controls */}
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div>
+                          <label className="block text-label-sm text-secondary text-xs mb-1 font-semibold">
+                            Staff Clinical Severity Assessment
+                          </label>
+                          <select
+                            value={selectedSeverity}
+                            onChange={(e) => setSelectedSeverity(e.target.value)}
+                            className="w-full bg-surface-container-lowest border border-outline-variant rounded px-3 py-2 text-sm text-on-surface font-body-md"
+                          >
+                            <option value="CRITICAL">CRITICAL (Emergency Life-Threatening)</option>
+                            <option value="HIGH">HIGH (Acute Symptoms / Urgent Review)</option>
+                            <option value="MEDIUM">MEDIUM (Moderate Symptoms)</option>
+                            <option value="LOW">LOW (Mild / Routine)</option>
+                          </select>
+                        </div>
+                        <div>
+                          <label className="block text-label-sm text-secondary text-xs mb-1 font-semibold">
+                            Staff Verification Notes
+                          </label>
+                          <input
+                            type="text"
+                            value={verificationNotes}
+                            onChange={(e) => setVerificationNotes(e.target.value)}
+                            placeholder="Clinical observations or vitals check..."
+                            className="w-full bg-surface-container-lowest border border-outline-variant rounded px-3 py-2 text-sm text-on-surface font-body-md"
+                          />
+                        </div>
+                      </div>
+
                       {/* AI Preliminary Box with Clinical Blue Overlay */}
                       <div className="p-4 bg-[#F0F7FF] border border-primary-fixed-dim rounded-lg relative overflow-hidden">
                         <div className="absolute top-0 right-0 p-2 opacity-10 pointer-events-none">
                           <span className="material-symbols-outlined text-[64px] text-primary">smart_toy</span>
                         </div>
-                        <h4 className="text-label-sm text-primary uppercase font-bold text-xs mb-3 flex items-center gap-1.5">
+                        <h4 className="text-label-sm text-primary uppercase font-bold text-xs mb-1 flex items-center gap-1.5">
                           <span className="material-symbols-outlined text-[16px]">auto_awesome</span>
-                          AI Preliminary Extraction (Groq Triage Engine)
+                          AI Preliminary Triage Support (Groq LLaMA 3.3 Engine)
                         </h4>
+                        <p className="text-[11px] text-primary opacity-80 mb-3 italic">
+                          AI-generated decision support — not a medical diagnosis.
+                        </p>
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4 relative z-10">
                           <div>
                             <label className="block text-label-sm text-primary opacity-80 text-xs mb-1">
-                              Possible Disease (Ghost Text)
+                              Self-Reported / Preliminary Condition
                             </label>
                             <input
                               type="text"
                               readOnly
-                              value={selectedPatient.aiPreliminary?.suggestedDisease || "Assessment in progress"}
+                              value={selectedPatient.possibleCondition || selectedPatient.aiPreliminary?.suggestedDisease || "Assessment in progress"}
                               className="w-full bg-transparent border-b border-primary-fixed-dim text-body-md text-on-surface font-semibold focus:outline-none focus:border-primary px-1 py-1"
                             />
                           </div>
                           <div>
                             <label className="block text-label-sm text-primary opacity-80 text-xs mb-1">
-                              AI Urgency Score (Est.)
+                              Preliminary Risk Assessment
                             </label>
                             <div className="flex items-center gap-3 mt-1">
-                              <div className="flex-1 h-2.5 bg-surface-container rounded-full overflow-hidden">
-                                <div
-                                  className={`h-full ${
-                                    (selectedPatient.aiPreliminary?.urgencyScore || 50) > 75
-                                      ? "bg-error"
-                                      : "bg-primary"
-                                  }`}
-                                  style={{ width: `${selectedPatient.aiPreliminary?.urgencyScore || 50}%` }}
-                                ></div>
-                              </div>
-                              <span className="text-body-md font-data-display font-bold text-error text-base">
-                                {selectedPatient.aiPreliminary?.urgencyScore || 50}/100
+                              <span className="text-body-md font-data-display font-bold text-primary text-base">
+                                Dynamic Priority Queue Ready
                               </span>
                             </div>
                           </div>
@@ -410,12 +459,6 @@ export const StaffValidation = () => {
                         ) : (
                           <p className="text-xs text-on-surface-variant py-4">No attachments uploaded by patient.</p>
                         )}
-                        <label className="flex-1 min-w-[200px] flex flex-col justify-center items-center border-2 border-dashed border-outline-variant rounded-lg p-6 text-center text-secondary hover:bg-surface-container-low transition-colors cursor-pointer">
-                          <input type="file" className="sr-only" />
-                          <span className="material-symbols-outlined text-[32px] mb-1">upload_file</span>
-                          <p className="text-body-md font-medium text-xs">Add additional reports</p>
-                          <p className="text-[10px] text-outline">PDF, JPG, PNG up to 10MB</p>
-                        </label>
                       </div>
                     </div>
                   </div>
@@ -433,14 +476,14 @@ export const StaffValidation = () => {
                         onClick={handleHold}
                         className="px-5 py-2.5 border border-primary text-primary rounded-lg font-medium hover:bg-surface-container-low transition-colors text-sm"
                       >
-                        Hold / Need Info
+                        Request Clarification
                       </button>
                       <button
                         onClick={handleValidate}
                         className="px-6 py-2.5 bg-primary text-on-primary rounded-lg font-medium shadow-sm hover:bg-on-primary-fixed-variant transition-colors flex items-center gap-2 text-sm"
                       >
                         <span className="material-symbols-outlined text-lg">check_circle</span>
-                        Validate & Send to AI Layer
+                        Verify & Trigger AI Triage
                       </button>
                     </div>
                   </div>

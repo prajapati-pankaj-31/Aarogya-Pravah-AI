@@ -1,9 +1,12 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
+import { useParams } from "react-router-dom";
 import Sidebar from "../../components/Sidebar";
 import ImageModal from "../../components/ImageModal";
+import doctorService from "../../services/doctorService";
 import { mockPatientHistory } from "../../mocks/mockData";
 
 export const PatientHistory = () => {
+  const { patientId } = useParams();
   const [historyData, setHistoryData] = useState(mockPatientHistory);
   const [modalImage, setModalImage] = useState(null);
   const [isEditingVitals, setIsEditingVitals] = useState(false);
@@ -14,7 +17,17 @@ export const PatientHistory = () => {
     temp: "37.0 °C"
   });
 
-  const { patient, timeline } = historyData;
+  useEffect(() => {
+    if (patientId) {
+      doctorService.getPatientDetails(patientId).then((res) => {
+        if (res.success && res.data) {
+          setHistoryData(res.data);
+        }
+      }).catch(() => {});
+    }
+  }, [patientId]);
+
+  const { patient = {}, timeline = [] } = historyData || {};
 
   return (
     <div className="bg-background text-on-background font-body-md antialiased min-h-screen flex h-screen overflow-hidden">
@@ -26,7 +39,7 @@ export const PatientHistory = () => {
         {/* TopAppBar */}
         <header className="bg-surface border-b border-outline-variant h-16 flex justify-between items-center px-margin-mobile md:px-margin-desktop flex-shrink-0">
           <div className="flex items-center space-x-8">
-            <h1 className="text-title-md font-headline-lg font-bold text-primary truncate">SmartQueue AI</h1>
+            <h1 className="text-title-md font-headline-lg font-bold text-primary truncate">Aarogya Pravah AI</h1>
             <nav className="hidden md:flex space-x-6 h-full items-center text-label-sm font-label-sm">
               <span className="text-primary border-b-2 border-primary font-bold px-2 py-4">Patient File & History</span>
             </nav>
@@ -47,24 +60,24 @@ export const PatientHistory = () => {
           <section className="bg-surface rounded-xl border border-outline-variant p-5 shadow-sm flex flex-col md:flex-row md:items-center justify-between gap-4">
             <div className="flex items-center gap-4">
               <div className="w-16 h-16 rounded-full bg-primary-container text-on-primary-container flex items-center justify-center text-title-md font-title-md font-bold shadow-sm">
-                MT
+                {(patient.fullName || "P").slice(0, 2).toUpperCase()}
               </div>
               <div>
                 <h2 className="text-headline-lg-mobile md:text-headline-lg font-headline-lg font-bold text-on-surface">
-                  {patient.fullName}
+                  {patient.fullName || "Patient File"}
                 </h2>
                 <div className="flex flex-wrap gap-2 md:gap-4 mt-1 text-body-md text-xs sm:text-sm text-on-surface-variant">
                   <span className="flex items-center gap-1">
                     <span className="material-symbols-outlined text-sm">cake</span>
-                    {patient.age} yrs (DOB: {patient.dob})
+                    {patient.age || 42} yrs (DOB: {patient.dob || "1982-01-01"})
                   </span>
                   <span className="flex items-center gap-1">
                     <span className="material-symbols-outlined text-sm">water_drop</span>
-                    {patient.bloodGroup}
+                    {patient.bloodGroup || "O+"}
                   </span>
                   <span className="flex items-center gap-1">
                     <span className="material-symbols-outlined text-sm">medical_services</span>
-                    {patient.primaryDoctor}
+                    {patient.primaryDoctor || "Dr. Staff Physician"}
                   </span>
                 </div>
               </div>
@@ -159,133 +172,52 @@ export const PatientHistory = () => {
                       }`}
                     ></div>
 
-                    {/* Mobile Date Header */}
-                    <div className="md:hidden flex items-center gap-2 mb-1">
-                      <div className={`w-3 h-3 rounded-full ${entry.isCritical ? "bg-primary" : "bg-secondary"}`}></div>
-                      <p className="text-label-sm font-label-sm font-bold text-primary text-xs">
-                        {entry.date} • {entry.department}
-                      </p>
-                    </div>
-
-                    {/* Entry Card */}
-                    <div className="flex-1 bg-surface border border-outline-variant rounded-lg p-5 shadow-sm hover:shadow-md transition-shadow relative overflow-hidden">
-                      <div
-                        className={`absolute top-0 right-0 w-1.5 h-full ${
-                          entry.isCritical ? "bg-error" : "bg-secondary-fixed-dim"
-                        }`}
-                      ></div>
-                      <div className="flex justify-between items-start mb-3">
-                        <h4 className="text-data-display font-data-display text-on-surface text-base font-bold">
-                          {entry.conditionTitle}
-                        </h4>
-                        <span
-                          className={`inline-flex items-center gap-1 px-2 py-0.5 rounded text-label-sm font-label-sm font-bold text-xs ${
-                            entry.isCritical ? "bg-error-container text-on-error-container" : "bg-surface-container-highest text-on-surface"
-                          }`}
-                        >
-                          AI Priority: {entry.aiPriority}
-                          {entry.isCritical && (
-                            <span className="material-symbols-outlined text-[14px]">warning</span>
-                          )}
+                    {/* Timeline Card */}
+                    <div className="flex-1 bg-surface border border-outline-variant rounded-xl p-5 shadow-sm space-y-3">
+                      <div className="flex justify-between items-start">
+                        <div>
+                          <span className="text-xs text-primary font-bold md:hidden">{entry.date} • {entry.department}</span>
+                          <h4 className="text-title-md font-headline-lg font-bold text-on-surface text-base">
+                            {entry.conditionTitle}
+                          </h4>
+                          <p className="text-xs text-on-surface-variant mt-0.5">Attending: {entry.doctor || "Clinical Staff"}</p>
+                        </div>
+                        <span className="px-2.5 py-0.5 bg-primary-fixed text-on-primary-fixed rounded text-xs font-bold font-data-display">
+                          {entry.aiPriority}
                         </span>
                       </div>
 
-                      <div className="bg-surface-container-low p-3 rounded mb-4 text-body-md text-sm text-on-surface-variant">
-                        <strong className="text-on-surface font-semibold">Diagnosis: </strong>
-                        {entry.diagnosis}
-                      </div>
-
-                      {/* Attachments Row */}
-                      <div className="flex gap-3 overflow-x-auto pb-1">
-                        {entry.attachments?.map((att, idx) => (
-                          <React.Fragment key={idx}>
-                            {att.type === "icon" ? (
-                              <div className="w-14 h-14 rounded bg-surface-container-high border border-outline-variant flex items-center justify-center flex-shrink-0 cursor-pointer hover:border-primary transition-colors">
-                                <span className="material-symbols-outlined text-secondary">{att.icon}</span>
-                              </div>
-                            ) : (
-                              <div
-                                onClick={() => setModalImage(att.thumbnail)}
-                                className="relative w-14 h-14 rounded bg-surface-container-high border border-outline-variant flex-shrink-0 cursor-pointer overflow-hidden hover:border-primary group shadow-sm"
-                              >
-                                <img src={att.thumbnail} alt="Scan" className="object-cover w-full h-full opacity-80 group-hover:opacity-100 transition-opacity" />
-                                <div className="absolute inset-0 flex items-center justify-center bg-inverse-surface/40 opacity-0 group-hover:opacity-100 transition-opacity">
-                                  <span className="material-symbols-outlined text-white text-sm">visibility</span>
-                                </div>
-                              </div>
-                            )}
-                          </React.Fragment>
-                        ))}
-                      </div>
+                      <p className="text-body-md text-sm text-on-surface">{entry.diagnosis}</p>
                     </div>
                   </div>
                 ))}
               </div>
             </div>
 
-            {/* Side Panel Stats (4 cols) */}
+            {/* Side Stats & Vitals Card (4 cols) */}
             <div className="lg:col-span-4 space-y-6">
-              {/* Quick Stats Card */}
-              <div className="bg-surface border border-outline-variant rounded-xl p-5 shadow-sm">
-                <h3 className="text-title-md font-title-md text-on-surface font-bold mb-4 flex items-center gap-2">
-                  <span className="material-symbols-outlined text-primary">analytics</span> Overview
-                </h3>
-                <div className="grid grid-cols-2 gap-4 mb-6">
-                  <div className="bg-surface-container-low p-3 rounded-lg text-center border border-outline-variant/60">
-                    <p className="text-display-lg font-display-lg text-primary">{patient.totalVisits}</p>
-                    <p className="text-label-sm font-label-sm text-on-surface-variant text-xs">Total Visits (3y)</p>
+              <div className="bg-surface border border-outline-variant rounded-xl p-5 shadow-sm space-y-4">
+                <h3 className="font-title-md text-title-md text-on-surface font-bold">Vitals & Allergy Summary</h3>
+                <div className="space-y-2 text-sm text-on-surface">
+                  <div className="flex justify-between py-1 border-b border-outline-variant">
+                    <span className="text-secondary">Blood Pressure:</span>
+                    <span className="font-semibold">{patientVitals.bp}</span>
                   </div>
-                  <div className="bg-surface-container-low p-3 rounded-lg text-center border border-outline-variant/60">
-                    <p className="text-display-lg font-display-lg text-error">{patient.maxAiRisk}</p>
-                    <p className="text-label-sm font-label-sm text-on-surface-variant text-xs">Max AI Risk</p>
+                  <div className="flex justify-between py-1 border-b border-outline-variant">
+                    <span className="text-secondary">Heart Rate:</span>
+                    <span className="font-semibold">{patientVitals.hr}</span>
                   </div>
-                </div>
-
-                <div className="space-y-3">
-                  <p className="text-label-sm font-label-sm text-on-surface-variant text-xs mb-1 font-semibold">
-                    Most Frequent Departments
-                  </p>
-                  {patient.frequentDepartments.map((dept, i) => (
-                    <div key={i} className="space-y-1">
-                      <div className="flex justify-between items-center text-body-md text-xs">
-                        <span>{dept.name}</span>
-                        <span className="font-bold">{dept.visits} visits</span>
-                      </div>
-                      <div className="w-full bg-surface-container-high h-1.5 rounded-full overflow-hidden">
-                        <div
-                          className={`h-full ${i === 0 ? "bg-primary" : "bg-secondary"}`}
-                          style={{ width: `${dept.percentage}%` }}
-                        ></div>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </div>
-
-              {/* AI Trend Sparkline Card */}
-              <div className="bg-surface border border-outline-variant rounded-xl p-5 shadow-sm bg-pattern relative overflow-hidden">
-                <div className="absolute inset-0 bg-[#F0F7FF]/50 z-0"></div>
-                <div className="relative z-10">
-                  <h3 className="text-title-md font-title-md text-on-surface font-bold mb-1 flex items-center gap-2">
-                    <span className="material-symbols-outlined text-primary">timeline</span> AI Risk Trend
-                  </h3>
-                  <p className="text-label-sm font-label-sm text-on-surface-variant text-xs mb-4">
-                    Historical triage score volatility.
-                  </p>
-                  <div className="h-24 w-full bg-surface-container-lowest rounded border border-outline-variant/40 flex items-end px-3 pt-4 pb-1 gap-2">
-                    {patient.trendData.map((item, idx) => (
-                      <div
-                        key={idx}
-                        className={`flex-1 rounded-t group relative transition-all ${
-                          item.isCritical ? "bg-error opacity-90" : "bg-primary-fixed-dim hover:bg-primary"
-                        }`}
-                        style={{ height: `${item.score}%` }}
-                      >
-                        <div className="absolute -top-7 left-1/2 -translate-x-1/2 bg-inverse-surface text-inverse-on-surface text-[10px] px-1.5 py-0.5 rounded opacity-0 group-hover:opacity-100 transition-opacity font-data-display pointer-events-none">
-                          Score: {item.score}
-                        </div>
-                      </div>
-                    ))}
+                  <div className="flex justify-between py-1 border-b border-outline-variant">
+                    <span className="text-secondary">Oxygen (SpO2):</span>
+                    <span className="font-semibold">{patientVitals.spo2}</span>
+                  </div>
+                  <div className="flex justify-between py-1 border-b border-outline-variant">
+                    <span className="text-secondary">Temperature:</span>
+                    <span className="font-semibold">{patientVitals.temp}</span>
+                  </div>
+                  <div className="flex justify-between py-1">
+                    <span className="text-secondary">Known Allergies:</span>
+                    <span className="font-semibold text-error">None reported</span>
                   </div>
                 </div>
               </div>
@@ -294,12 +226,11 @@ export const PatientHistory = () => {
         </main>
       </div>
 
-      {/* Lightbox Scan Modal */}
       <ImageModal
         isOpen={!!modalImage}
         onClose={() => setModalImage(null)}
         imageUrl={modalImage}
-        title="Historical Radiology Scan"
+        title="Patient Medical Scan"
       />
     </div>
   );

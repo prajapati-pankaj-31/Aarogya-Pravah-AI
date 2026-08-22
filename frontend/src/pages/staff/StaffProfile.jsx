@@ -138,7 +138,7 @@ export const StaffProfile = () => {
                     </div>
                     <div>
                       <p className="text-secondary mb-0.5">Hospital Email</p>
-                      <p className="text-on-surface font-medium">{profile?.email || "a.thorne@smartqueue.med"}</p>
+                      <p className="text-on-surface font-medium">{profile?.email || "a.thorne@aarogyapravah.ai"}</p>
                     </div>
                     <div>
                       <p className="text-secondary mb-0.5">Contact Number</p>

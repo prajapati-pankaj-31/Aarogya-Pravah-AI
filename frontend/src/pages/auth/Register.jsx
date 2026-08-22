@@ -81,7 +81,7 @@ export const Register = ({ initialRole = "doctor" }) => {
               >
                 monitor_heart
               </span>
-              <span className="font-headline-lg text-headline-lg text-primary tracking-tight">SmartQueue AI</span>
+              <span className="font-headline-lg text-headline-lg text-primary tracking-tight">Aarogya Pravah AI</span>
             </div>
             <h2 className="font-display-lg text-display-lg text-on-surface leading-tight mb-4">
               Empowering <br />Clinical Excellence
@@ -123,7 +123,7 @@ export const Register = ({ initialRole = "doctor" }) => {
               monitor_heart
             </span>
             <span className="font-headline-lg-mobile text-headline-lg-mobile text-primary tracking-tight">
-              SmartQueue AI
+              Aarogya Pravah AI
             </span>
           </div>
 
