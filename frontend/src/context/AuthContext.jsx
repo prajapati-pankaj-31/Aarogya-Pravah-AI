@@ -9,7 +9,7 @@ export const AuthProvider = ({ children }) => {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const savedToken = localStorage.getItem("smartqueue_token");
+    const savedToken = localStorage.getItem("aarogyapravah_token") || localStorage.getItem("smartqueue_token");
     const savedUser = authService.getCurrentUser();
 
     if (savedToken && savedUser) {
@@ -23,9 +23,9 @@ export const AuthProvider = ({ children }) => {
     setLoading(true);
     try {
       const response = await authService.login(credentials);
-      if (response && response.user) {
+      if (response && response.success && response.user) {
         setUser(response.user);
-        setToken(response.token || localStorage.getItem("smartqueue_token"));
+        setToken(response.token || localStorage.getItem("aarogyapravah_token") || localStorage.getItem("smartqueue_token"));
         return { success: true, user: response.user };
       }
       return { success: false, message: response?.message || "Login failed" };
@@ -40,6 +40,10 @@ export const AuthProvider = ({ children }) => {
     setLoading(true);
     try {
       const response = await authService.register(userData);
+      if (response && response.success && response.user) {
+        setUser(response.user);
+        setToken(response.token || localStorage.getItem("aarogyapravah_token") || localStorage.getItem("smartqueue_token"));
+      }
       return response;
     } finally {
       setLoading(false);
@@ -53,8 +57,13 @@ export const AuthProvider = ({ children }) => {
   };
 
   const isRole = (role) => {
-    if (!user) return false;
-    return user.role === role || (role === "staff" && user.role === "support");
+    if (!user || !user.role) return false;
+    const current = user.role.toLowerCase();
+    const target = (role || "").toLowerCase();
+    if (current === target) return true;
+    if (target === "staff" && (current === "support" || current === "nurse" || current === "compounder")) return true;
+    if (target === "doctor" && (current === "physician" || current === "specialist")) return true;
+    return false;
   };
 
   return (

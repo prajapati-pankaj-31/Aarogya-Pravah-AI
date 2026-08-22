@@ -1,4 +1,4 @@
-// Comprehensive Mock Data for SmartQueue AI
+// Comprehensive Mock Data for Aarogya Pravah AI
 
 export const mockStaffProfile = {
   id: "STAFF-001",
@@ -7,7 +7,7 @@ export const mockStaffProfile = {
   role: "Senior Cardiologist",
   department: "Cardiology Department",
   employeeId: "EMP-2048-CT",
-  email: "a.thorne@smartqueue.med",
+  email: "a.thorne@aarogyapravah.ai",
   contact: "+1 (555) 284-9382",
   license: "MED-LI-773829",
   dateOfJoining: "October 14, 2018",

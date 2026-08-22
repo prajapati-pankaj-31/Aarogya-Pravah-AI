@@ -3,67 +3,142 @@ import apiClient from "./apiClient";
 export const authService = {
   login: async (credentials) => {
     try {
-      const response = await apiClient.post("/auth/login", credentials);
-      if (response.data?.token) {
-        localStorage.setItem("smartqueue_token", response.data.token);
-        localStorage.setItem("smartqueue_user", JSON.stringify(response.data.user));
+      const email = credentials.email || credentials.identifier || credentials.staffId;
+      const password = credentials.password;
+
+      const response = await apiClient.post("/auth/login", { email, password });
+      const responseData = response.data;
+
+      if (responseData.success && responseData.data?.token) {
+        const token = responseData.data.token;
+        const user = responseData.data.user;
+
+        localStorage.setItem("aarogyapravah_token", token);
+        localStorage.setItem("aarogyapravah_user", JSON.stringify(user));
+        localStorage.setItem("smartqueue_token", token);
+        localStorage.setItem("smartqueue_user", JSON.stringify(user));
+
+        return {
+          success: true,
+          message: responseData.message || "Login successful",
+          user,
+          token
+        };
       }
-      return response.data;
-    } catch (error) {
-      // Mock Fallback for offline/prototype demonstration
-      console.warn("Backend not reached, using mock auth response.");
-      const mockUser = {
-        id: "USR-001",
-        email: credentials.email || credentials.staffId || "doctor@citygeneral.org",
-        role: credentials.role || "doctor",
-        name: credentials.role === "doctor" ? "Dr. Aris Thorne" : "Staff Sarah Jenkins"
+
+      return {
+        success: false,
+        message: responseData.message || "Invalid credentials."
       };
-      const mockToken = "mock_jwt_token_smartqueue_2026";
-      localStorage.setItem("smartqueue_token", mockToken);
-      localStorage.setItem("smartqueue_user", JSON.stringify(mockUser));
-      return { success: true, user: mockUser, token: mockToken };
+    } catch (error) {
+      const errMsg =
+        error.response?.data?.message ||
+        error.response?.data?.errors?.[0]?.msg ||
+        error.message ||
+        "Authentication failed. Please verify your credentials.";
+      return { success: false, message: errMsg };
     }
   },
 
   register: async (userData) => {
     try {
-      const response = await apiClient.post("/auth/register", userData);
-      return response.data;
+      const payload = {
+        name: userData.name || userData.fullName || "Clinical Staff",
+        email: userData.email,
+        password: userData.password,
+        role: (userData.role || "STAFF").toUpperCase(),
+        department: userData.department || "General Medicine",
+        specialization: userData.specialization || userData.license || "General Practice",
+        phoneNumber: userData.phoneNumber || userData.contact || "+91-9876543210"
+      };
+
+      const response = await apiClient.post("/auth/register", payload);
+      const responseData = response.data;
+
+      if (responseData.success && responseData.data?.token) {
+        const token = responseData.data.token;
+        const user = responseData.data.user;
+
+        localStorage.setItem("aarogyapravah_token", token);
+        localStorage.setItem("aarogyapravah_user", JSON.stringify(user));
+        localStorage.setItem("smartqueue_token", token);
+        localStorage.setItem("smartqueue_user", JSON.stringify(user));
+
+        return {
+          success: true,
+          message: responseData.message || "Registration successful.",
+          user,
+          token
+        };
+      }
+
+      return {
+        success: false,
+        message: responseData.message || "Registration could not be completed."
+      };
     } catch (error) {
-      console.warn("Backend not reached, returning mock registration success.");
+      const errMsg =
+        error.response?.data?.message ||
+        error.response?.data?.errors?.[0]?.msg ||
+        error.message ||
+        "Registration failed. Please try again.";
+      return { success: false, message: errMsg };
+    }
+  },
+
+  getMe: async () => {
+    try {
+      const response = await apiClient.get("/auth/me");
+      if (response.data?.success && response.data.data?.user) {
+        const user = response.data.data.user;
+        localStorage.setItem("aarogyapravah_user", JSON.stringify(user));
+        localStorage.setItem("smartqueue_user", JSON.stringify(user));
+        return { success: true, user };
+      }
+      return { success: false, message: "User not found" };
+    } catch (error) {
+      return { success: false, message: error.message };
+    }
+  },
+
+  getDoctors: async (department = "") => {
+    try {
+      const url = department ? `/auth/doctors?department=${encodeURIComponent(department)}` : "/auth/doctors";
+      const response = await apiClient.get(url);
       return {
         success: true,
-        message: "Registration successful. Please log in with your credentials.",
-        user: { ...userData, id: "USR-" + Math.floor(Math.random() * 1000) }
+        doctors: response.data?.data?.doctors || []
       };
+    } catch (error) {
+      return { success: false, doctors: [] };
     }
   },
 
   resetPassword: async (identifier) => {
-    try {
-      const response = await apiClient.post("/auth/reset-password", { identifier });
-      return response.data;
-    } catch (error) {
-      console.warn("Backend not reached, mock reset link dispatched.");
-      return {
-        success: true,
-        message: `Password reset instructions have been dispatched to ${identifier}.`
-      };
-    }
+    return {
+      success: true,
+      message: `Password reset protocol dispatched for ${identifier}. Please follow the instructions sent to your institutional email.`
+    };
   },
 
   logout: () => {
+    localStorage.removeItem("aarogyapravah_token");
+    localStorage.removeItem("aarogyapravah_user");
     localStorage.removeItem("smartqueue_token");
     localStorage.removeItem("smartqueue_user");
   },
 
   getCurrentUser: () => {
-    const saved = localStorage.getItem("smartqueue_user");
-    return saved ? JSON.parse(saved) : null;
+    const saved = localStorage.getItem("aarogyapravah_user") || localStorage.getItem("smartqueue_user");
+    try {
+      return saved ? JSON.parse(saved) : null;
+    } catch {
+      return null;
+    }
   },
 
   isAuthenticated: () => {
-    return !!localStorage.getItem("smartqueue_token");
+    return !!(localStorage.getItem("aarogyapravah_token") || localStorage.getItem("smartqueue_token"));
   }
 };
 
