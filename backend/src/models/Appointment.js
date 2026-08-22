@@ -14,6 +14,15 @@ const appointmentStatusEnum = [
 
 const severityEnum = ['LOW', 'MEDIUM', 'HIGH', 'CRITICAL'];
 const accidentSeverityEnum = ['NONE', 'EASY', 'MEDIUM', 'HIGH'];
+const medicalImageTypeEnum = ['XRAY', 'X-RAY', 'CT_SCAN', 'CT-SCAN', 'MRI', 'PHOTO', 'OTHER', 'NONE'];
+const medicalImageStatusEnum = [
+  'UPLOADING',
+  'UPLOADED',
+  'ANALYSIS_PENDING',
+  'ANALYZING',
+  'ANALYZED',
+  'ANALYSIS_FAILED',
+];
 
 const appointmentSchema = new mongoose.Schema(
   {
@@ -64,13 +73,55 @@ const appointmentSchema = new mongoose.Schema(
       enum: accidentSeverityEnum,
       default: 'NONE',
     },
+    medicalImage: {
+      provider: {
+        type: String,
+        default: 'cloudinary',
+      },
+      assetId: {
+        type: String,
+      },
+      publicId: {
+        type: String,
+      },
+      secureUrl: {
+        type: String,
+      },
+      resourceType: {
+        type: String,
+        default: 'image',
+      },
+      format: {
+        type: String,
+      },
+      bytes: {
+        type: Number,
+      },
+      uploadedAt: {
+        type: Date,
+      },
+      status: {
+        type: String,
+        enum: medicalImageStatusEnum,
+        default: 'UPLOADED',
+      },
+      analysisStartedAt: {
+        type: Date,
+      },
+      analysisCompletedAt: {
+        type: Date,
+      },
+      analysisError: {
+        type: String,
+      },
+    },
     medicalImageUrl: {
       type: String,
       trim: true,
     },
     medicalImageType: {
       type: String,
-      enum: ['X-RAY', 'CT-SCAN', 'MRI', 'PHOTO', 'OTHER', 'NONE'],
+      enum: medicalImageTypeEnum,
       default: 'NONE',
     },
     appointmentDate: {
@@ -127,4 +178,6 @@ module.exports = {
   appointmentStatusEnum,
   severityEnum,
   accidentSeverityEnum,
+  medicalImageTypeEnum,
+  medicalImageStatusEnum,
 };

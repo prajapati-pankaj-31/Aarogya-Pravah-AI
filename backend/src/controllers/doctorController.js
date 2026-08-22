@@ -30,7 +30,7 @@ const getDoctorQueue = async (req, res, next) => {
       .populate({
         path: 'appointment',
         select:
-          'tokenNumber department symptoms symptomsDescription reportedSeverity staffSeverity isAccident accidentSeverity medicalImageUrl medicalImageType appointmentDate status',
+          'tokenNumber department symptoms symptomsDescription reportedSeverity staffSeverity isAccident accidentSeverity medicalImageUrl medicalImageType medicalImage appointmentDate status',
       })
       .populate('patient', 'name age gender phoneNumber bloodGroup allergies')
       .populate('assignedDoctor', 'name specialization')

@@ -108,8 +108,8 @@ const runTests = async () => {
     const docToken = docReg.body.data.token;
     assert(Boolean(docToken), 'Doctor received valid JWT token');
 
-    // TEST 3: Patient Appointment Booking (Public API, No Login)
-    console.log('\n[TEST 3] Testing Patient Appointment Booking');
+    // TEST 3A: Patient Appointment Booking (Without X-Ray)
+    console.log('\n[TEST 3A] Testing Patient Appointment Booking (Without X-Ray)');
     const bookingRes = await request('POST', '/api/patients/appointments', {
       name: 'Aarav Sharma',
       age: 42,
@@ -122,11 +122,30 @@ const runTests = async () => {
       severityLevel: 'HIGH',
       isAccident: false,
     });
-    assert(bookingRes.status === 201, 'Patient appointment booked with HTTP 201');
+    assert(bookingRes.status === 201, 'Patient appointment without X-ray booked with HTTP 201');
     assert(bookingRes.body.data.status === 'PENDING_STAFF_VERIFICATION', 'Status is PENDING_STAFF_VERIFICATION');
     const tokenNumber = bookingRes.body.data.tokenNumber;
     const appointmentId = bookingRes.body.data.appointmentId;
     assert(Boolean(tokenNumber), `Generated unique token: ${tokenNumber}`);
+
+    // TEST 3B: Patient Appointment Booking (With medicalImageType = 'XRAY')
+    console.log('\n[TEST 3B] Testing Patient Appointment Booking (With medicalImageType = XRAY)');
+    const xrayBookingRes = await request('POST', '/api/patients/appointments', {
+      name: 'Pooja Verma',
+      age: 28,
+      gender: 'Female',
+      phoneNumber: '+91-9911223344',
+      department: 'Orthopedics',
+      possibleCondition: 'Wrist Fracture',
+      symptoms: ['Wrist pain', 'Swelling after fall'],
+      symptomsDescription: 'Severe pain on moving left wrist.',
+      severityLevel: 'HIGH',
+      isAccident: true,
+      accidentSeverity: 'MEDIUM',
+      medicalImageType: 'XRAY',
+    });
+    assert(xrayBookingRes.status === 201, 'Patient appointment with XRAY booked with HTTP 201');
+    assert(Boolean(xrayBookingRes.body.data.tokenNumber), `Generated X-ray token: ${xrayBookingRes.body.data.tokenNumber}`);
 
     // TEST 4: Patient Token Lookup (Privacy-Preserving)
     console.log('\n[TEST 4] Testing Privacy-Safe Patient Token Tracking');

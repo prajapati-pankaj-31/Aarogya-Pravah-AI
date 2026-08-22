@@ -4,6 +4,7 @@ const { AIAnalysis } = require('../models/AIAnalysis');
 const { MedicalImageAnalysis } = require('../models/MedicalImageAnalysis');
 const { analyzePatientTriage } = require('../services/groqService');
 const { updateAppointmentPriority } = require('../services/queueService');
+const { processScreeningResult } = require('../services/imageAnalysisService');
 const { recordAuditLog } = require('../services/auditService');
 const ApiResponse = require('../utils/apiResponse');
 const logger = require('../utils/logger');
@@ -108,70 +109,37 @@ const receiveImageAnalysisResult = async (req, res, next) => {
       confidenceSignal = 0.85,
       findingsDetails = {},
       imageUrl,
+      publicId,
+      assetId,
       timestamp,
     } = req.body;
 
-    // Find appointment by either appointmentId or tokenNumber
-    let appointment;
-    if (appointmentId) {
-      appointment = await Appointment.findById(appointmentId).populate('patient');
-    } else if (tokenNumber) {
-      appointment = await Appointment.findOne({ tokenNumber }).populate('patient');
-    }
-
-    if (!appointment) {
-      return ApiResponse.notFound(
-        res,
-        'Appointment not found. Provide a valid appointmentId or tokenNumber.'
-      );
-    }
-
-    // Save or update MedicalImageAnalysis record
-    let imageRecord = await MedicalImageAnalysis.findOne({ appointment: appointment._id });
-    if (!imageRecord) {
-      imageRecord = new MedicalImageAnalysis({
-        appointment: appointment._id,
-        patient: appointment.patient._id,
-        screeningStatus,
-        imageScore: Number(imageScore),
-        possibleFindings: Array.isArray(possibleFindings) ? possibleFindings : [possibleFindings],
-        modelVersion,
-        confidenceSignal: Number(confidenceSignal),
-        findingsDetails,
-        imageUrl: imageUrl || appointment.medicalImageUrl,
-        timestamp: timestamp ? new Date(timestamp) : new Date(),
-      });
-    } else {
-      imageRecord.screeningStatus = screeningStatus;
-      imageRecord.imageScore = Number(imageScore);
-      imageRecord.possibleFindings = Array.isArray(possibleFindings) ? possibleFindings : [possibleFindings];
-      imageRecord.modelVersion = modelVersion;
-      imageRecord.confidenceSignal = Number(confidenceSignal);
-      imageRecord.findingsDetails = findingsDetails;
-      if (imageUrl) imageRecord.imageUrl = imageUrl;
-      imageRecord.timestamp = timestamp ? new Date(timestamp) : new Date();
-    }
-
-    await imageRecord.save();
-
-    logger.info(
-      `[PyTorch Image Screening Ingested] Token: ${appointment.tokenNumber}, Score: ${imageScore}, Status: ${screeningStatus}`
-    );
-
-    // Automatically recalculate priority score and queue position
-    const updateResult = await updateAppointmentPriority(appointment._id);
+    const result = await processScreeningResult({
+      appointmentId,
+      tokenNumber,
+      screeningStatus,
+      imageScore,
+      possibleFindings,
+      modelVersion,
+      confidenceSignal,
+      findingsDetails,
+      imageUrl,
+      publicId,
+      assetId,
+      timestamp,
+    });
 
     await recordAuditLog({
       userName: 'PyTorch Screening Worker',
       userRole: 'SYSTEM',
       action: 'IMAGE_SCREENING_INGESTED',
       targetType: 'IMAGE_ANALYSIS',
-      targetId: imageRecord._id,
+      targetId: result.imageRecord._id,
       details: {
-        tokenNumber: appointment.tokenNumber,
+        tokenNumber: result.appointment.tokenNumber,
         screeningStatus,
         imageScore,
-        newPriorityScore: updateResult?.priorityResult?.priorityScore,
+        newPriorityScore: result.updatedPriority?.priorityScore,
       },
       ipAddress: req.ip,
       userAgent: req.headers['user-agent'],
@@ -181,9 +149,9 @@ const receiveImageAnalysisResult = async (req, res, next) => {
       res,
       'Preliminary medical image screening signal processed and priority updated',
       {
-        tokenNumber: appointment.tokenNumber,
-        imageAnalysis: imageRecord,
-        updatedPriority: updateResult ? updateResult.priorityResult : null,
+        tokenNumber: result.appointment.tokenNumber,
+        imageAnalysis: result.imageRecord,
+        updatedPriority: result.updatedPriority,
       }
     );
   } catch (error) {
