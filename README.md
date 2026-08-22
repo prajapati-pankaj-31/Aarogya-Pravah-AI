@@ -188,6 +188,13 @@ VITE_SOCKET_URL=http://localhost:5000
 cd backend
 npm install
 
+# Configure environment variables in backend/.env:
+# CLOUDINARY_CLOUD_NAME=your_cloud_name
+# CLOUDINARY_API_KEY=your_api_key
+# CLOUDINARY_API_SECRET=your_api_secret
+# CLOUDINARY_FOLDER=aarogya-pravah-ai/xrays
+# PYTORCH_SERVICE_URL=http://localhost:8000
+
 # (Optional) Seed demo users & sample patients
 npm run seed
 
@@ -199,7 +206,45 @@ npm run dev
 ```
 *Backend runs on `http://localhost:5000`.*
 
-### 3. Frontend Setup
+### 3. Cloudinary Medical Image Storage Setup
+1. Create a Cloudinary account at [cloudinary.com](https://cloudinary.com).
+2. Obtain your **Cloud Name**, **API Key**, and **API Secret** from the Cloudinary Console.
+3. Configure `backend/.env` with these server-side variables (never expose in client code):
+   ```env
+   CLOUDINARY_CLOUD_NAME=your_cloud_name
+   CLOUDINARY_API_KEY=your_api_key
+   CLOUDINARY_API_SECRET=your_api_secret
+   CLOUDINARY_FOLDER=aarogya-pravah-ai/xrays
+   ```
+4. Uploaded X-rays are streamed directly to Cloudinary using in-memory buffers with privacy-safe public IDs (`xray_anon_...`).
+
+### 4. Python + PyTorch ML Screening Service Contract
+The Node.js backend communicates with the Python ML screening service via:
+- **Environment Variable**: `PYTORCH_SERVICE_URL=http://localhost:8000`
+- **Asynchronous Request** (`POST /api/v1/screen-xray`):
+  ```json
+  {
+    "appointmentId": "60d0fe4f5311236168a109ca",
+    "tokenNumber": "EMG-20260822-1032",
+    "patientId": "60d0fe4f5311236168a109c9",
+    "imageUrl": "https://res.cloudinary.com/.../xray.jpg",
+    "imageId": "xray_109c9_1719283_a1b2c3d4",
+    "requestId": "req_1719283_a109ca"
+  }
+  ```
+- **Ingestion Webhook** (`POST /api/ai/image-analysis-result`):
+  ```json
+  {
+    "tokenNumber": "EMG-20260822-1032",
+    "screeningStatus": "MODERATE_FINDINGS",
+    "imageScore": 0.78,
+    "possibleFindings": ["Bilateral infiltrates", "Bronchial wall thickening"],
+    "modelVersion": "pytorch-chest-xray-v2.1",
+    "confidenceSignal": 0.92
+  }
+  ```
+
+### 5. Frontend Setup
 
 ```bash
 cd frontend

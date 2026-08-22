@@ -430,7 +430,7 @@ Authorization: Bearer <your_jwt_token>
   }
 }
 ```
-- **Response (200 OK)**: Ingests screening record, automatically recalculates priority score, updates queue position, and emits real-time event.
+- **Response (200 OK)**: Ingests screening record, updates `Appointment.medicalImage.status = 'ANALYZED'`, automatically recalculates priority score, updates queue position, and emits real-time event.
 
 ### 6.2 Manual Groq AI Triage Trigger
 - **Endpoint**: `POST /api/ai/analyze-triage/:appointmentId`
@@ -438,9 +438,42 @@ Authorization: Bearer <your_jwt_token>
 
 ---
 
-## 7. Real-Time Socket.IO Integration Guide
+## 7. Cloudinary Medical Image Storage & PyTorch Integration Architecture
 
-### 7.1 Connection Setup (React Client Example)
+```text
+React Frontend
+      ↓ (multipart/form-data via multer.memoryStorage)
+Node.js Express Backend
+      ↓ (Stream Buffer via cloudinary.uploader.upload_stream)
+Cloudinary Persistent Medical Storage (Folder: aarogya-pravah-ai/xrays)
+      ↓ (Generates anonymous public ID: xray_anon_...)
+Node.js saves asset metadata to MongoDB (Appointment.medicalImage)
+      ↓ (Async dispatch with secure URL, NO Cloudinary credentials shared)
+Python + PyTorch ML Service (POST /api/v1/screen-xray or Webhook)
+      ↓ (Returns preliminary screening signal score & findings)
+Node.js Priority Engine recalculates queue priority
+      ↓ (Socket.IO priority_updated / queue_updated)
+Doctor Dashboard updates in real time
+```
+
+### Server Configuration Variables
+```env
+# Cloudinary (Server-Side Only - Never exposed to frontend)
+CLOUDINARY_CLOUD_NAME=your_cloud_name
+CLOUDINARY_API_KEY=your_api_key
+CLOUDINARY_API_SECRET=your_api_secret
+CLOUDINARY_FOLDER=aarogya-pravah-ai/xrays
+
+# Python ML Screening Service
+PYTORCH_SERVICE_URL=http://localhost:8000
+PYTORCH_SERVICE_TIMEOUT=10000
+```
+
+---
+
+## 8. Real-Time Socket.IO Integration Guide
+
+### 8.1 Connection Setup (React Client Example)
 
 ```javascript
 import { io } from 'socket.io-client';
@@ -462,7 +495,7 @@ socket.emit('join_department', { department: 'Emergency' });
 socket.emit('join_patient', { tokenNumber: 'EMG-20260822-4819' });
 ```
 
-### 7.2 Events Emitted by Server
+### 8.2 Events Emitted by Server
 
 | Event Name | Sent To | Description | Payload Preview |
 |---|---|---|---|
