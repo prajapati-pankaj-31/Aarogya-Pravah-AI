@@ -77,7 +77,7 @@ const appointmentLimiter = rateLimit({
 
 // Health check endpoint
 app.get('/api/health', (req, res) => {
-  return ApiResponse.success(res, 'SmartQueueAI Backend API is healthy and running', {
+  return ApiResponse.success(res, 'Aarogya Pravah AI Backend API is healthy and running', {
     uptime: process.uptime(),
     timestamp: new Date(),
     environment: process.env.NODE_ENV || 'development',

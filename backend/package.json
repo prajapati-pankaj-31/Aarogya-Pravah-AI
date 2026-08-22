@@ -1,7 +1,7 @@
 {
-  "name": "smart-queue-ai-backend",
+  "name": "aarogya-pravah-ai-backend",
   "version": "1.0.0",
-  "description": "AI-Powered Smart Patient Queue Management System Backend",
+  "description": "Aarogya Pravah AI - Smart Patient Queue Management System Backend",
   "main": "src/server.js",
   "scripts": {
     "start": "node src/server.js",
@@ -19,7 +19,7 @@
     "express",
     "mongoose"
   ],
-  "author": "SmartQueueAI Team",
+  "author": "Aarogya Pravah AI Team",
   "license": "MIT",
   "dependencies": {
     "bcryptjs": "^3.0.3",

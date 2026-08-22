@@ -1,4 +1,4 @@
-# SmartQueueAI - Backend API & Real-Time Integration Documentation
+# Aarogya Pravah AI - Backend API & Real-Time Integration Documentation
 
 AI-Powered Smart Patient Queue Management System REST API and Socket.IO real-time event specification for frontend integration (React + Vite + Tailwind CSS).
 
@@ -95,7 +95,7 @@ Authorization: Bearer <your_jwt_token>
 - **Request Body**:
 ```json
 {
-  "email": "staff@smartqueue.ai",
+  "email": "staff@aarogyapravah.ai",
   "password": "password123"
 }
 ```
@@ -109,7 +109,7 @@ Authorization: Bearer <your_jwt_token>
     "user": {
       "id": "65e23a4b...",
       "name": "Nurse Priya Sharma",
-      "email": "staff@smartqueue.ai",
+      "email": "staff@aarogyapravah.ai",
       "role": "STAFF",
       "department": "Emergency & Triage"
     },

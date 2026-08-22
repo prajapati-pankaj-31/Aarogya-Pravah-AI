@@ -13,7 +13,7 @@ const { generateTokenNumber } = require('../src/utils/tokenGenerator');
 
 const seedData = async () => {
   try {
-    const mongoUri = process.env.MONGODB_URI || 'mongodb://127.0.0.1:27017/smart_queue_ai';
+    const mongoUri = process.env.MONGODB_URI || 'mongodb://127.0.0.1:27017/aarogya_pravah_ai';
     console.log(`[Seed] Connecting to MongoDB at ${mongoUri}...`);
     await mongoose.connect(mongoUri);
 
@@ -32,7 +32,7 @@ const seedData = async () => {
     console.log('[Seed] Creating Staff & Doctor users...');
     const staff1 = await User.create({
       name: 'Nurse Priya Sharma',
-      email: 'staff@smartqueue.ai',
+      email: 'staff@aarogyapravah.ai',
       password: 'password123',
       role: 'STAFF',
       department: 'Emergency & Triage',
@@ -41,7 +41,7 @@ const seedData = async () => {
 
     const docEmergency = await User.create({
       name: 'Dr. Arjun Mehta, MD',
-      email: 'dr.mehta@smartqueue.ai',
+      email: 'dr.mehta@aarogyapravah.ai',
       password: 'password123',
       role: 'DOCTOR',
       department: 'Emergency',
@@ -51,7 +51,7 @@ const seedData = async () => {
 
     const docGeneral = await User.create({
       name: 'Dr. Ananya Roy, MBBS',
-      email: 'dr.roy@smartqueue.ai',
+      email: 'dr.roy@aarogyapravah.ai',
       password: 'password123',
       role: 'DOCTOR',
       department: 'General Medicine',
@@ -61,7 +61,7 @@ const seedData = async () => {
 
     const docCardio = await User.create({
       name: 'Dr. Vikram Seth, DM',
-      email: 'dr.seth@smartqueue.ai',
+      email: 'dr.seth@aarogyapravah.ai',
       password: 'password123',
       role: 'DOCTOR',
       department: 'Cardiology',
@@ -329,16 +329,16 @@ const seedData = async () => {
     console.log('====================================================');
     console.log('\nDemo User Credentials:');
     console.log('Staff:');
-    console.log('  Email:    staff@smartqueue.ai');
+    console.log('  Email:    staff@aarogyapravah.ai');
     console.log('  Password: password123');
     console.log('\nDoctor (Emergency):');
-    console.log('  Email:    dr.mehta@smartqueue.ai');
+    console.log('  Email:    dr.mehta@aarogyapravah.ai');
     console.log('  Password: password123');
     console.log('\nDoctor (General Medicine):');
-    console.log('  Email:    dr.roy@smartqueue.ai');
+    console.log('  Email:    dr.roy@aarogyapravah.ai');
     console.log('  Password: password123');
     console.log('\nDoctor (Cardiology):');
-    console.log('  Email:    dr.seth@smartqueue.ai');
+    console.log('  Email:    dr.seth@aarogyapravah.ai');
     console.log('  Password: password123');
     console.log('\nDemo Patient Tokens:');
     console.log(`  Critical Accident:     ${token1}`);

@@ -30,7 +30,7 @@ initSocketIO(io);
 // Start server
 server.listen(PORT, () => {
   logger.info(`========================================================`);
-  logger.info(` SmartQueueAI Backend Server running on port ${PORT}`);
+  logger.info(` Aarogya Pravah AI Backend Server running on port ${PORT}`);
   logger.info(` Environment: ${process.env.NODE_ENV || 'development'}`);
   logger.info(` Health check: http://localhost:${PORT}/api/health`);
   logger.info(` Socket.IO endpoint active at ws://localhost:${PORT}`);

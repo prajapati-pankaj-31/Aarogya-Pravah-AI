@@ -1,4 +1,4 @@
-# AI-Powered Smart Patient Queue Management System - Backend
+# Aarogya Pravah AI — Backend
 
 Production-ready, modular Node.js + Express + MongoDB backend with Groq AI clinical triage, PyTorch image screening integration, multi-factor dynamic priority queueing, role-based auth (Staff & Doctor), token-based patient tracking, and Socket.IO real-time event broadcasting.
 
@@ -21,7 +21,7 @@ Production-ready, modular Node.js + Express + MongoDB backend with Groq AI clini
 ## 📂 Project Architecture
 
 ```
-SmartQueueAI/
+Aarogya Pravah AI/backend/
 ├── src/
 │   ├── config/
 │   │   ├── db.js                 # MongoDB connection logic
@@ -90,8 +90,7 @@ SmartQueueAI/
 
 ### 2. Installation
 ```bash
-git clone <repository_url>
-cd SmartQueueAI
+cd backend
 npm install
 ```
 
@@ -165,4 +164,4 @@ $$\text{Priority Score} = S_{\text{clinical}} + S_{\text{accident}} + S_{\text{A
 
 ## 📡 Frontend Integration
 
-For comprehensive REST endpoints, request/response payloads, and Socket.IO client code examples, please refer to [API_DOCUMENTATION.md](file:///d:/SmartQueueAI/API_DOCUMENTATION.md).
+For comprehensive REST endpoints, request/response payloads, and Socket.IO client code examples, please refer to [API_DOCUMENTATION.md](file:///c:/Users/praja/OneDrive/Desktop/Aarogya%20Pravah%20AI/backend/API_DOCUMENTATION.md).

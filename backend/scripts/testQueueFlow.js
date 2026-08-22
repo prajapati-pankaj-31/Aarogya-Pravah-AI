@@ -1,5 +1,5 @@
 /**
- * Automated End-to-End Flow Test Script for SmartQueueAI Backend
+ * Automated End-to-End Flow Test Script for Aarogya Pravah AI Backend
  * Runs in-memory HTTP requests against the Express app and MongoDB.
  */
 require('dotenv').config();
@@ -60,9 +60,9 @@ const assert = (condition, message) => {
 
 const runTests = async () => {
   try {
-    const mongoUri = process.env.MONGODB_URI || 'mongodb://127.0.0.1:27017/smart_queue_ai';
+    const mongoUri = process.env.MONGODB_URI || 'mongodb://127.0.0.1:27017/aarogya_pravah_ai';
     console.log(`\n======================================================`);
-    console.log(`🚀 STARTING SMARTQUEUEAI INTEGRATION TEST SUITE`);
+    console.log(`🚀 STARTING AAROGYA PRAVAH AI INTEGRATION TEST SUITE`);
     console.log(`======================================================\n`);
 
     console.log(`[Test Setup] Connecting to MongoDB at ${mongoUri}...`);
