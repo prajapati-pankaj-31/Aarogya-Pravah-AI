@@ -195,12 +195,13 @@ function adaptAppointmentForStaff(appt) {
   const createdDate = appt.createdAt ? new Date(appt.createdAt) : new Date();
 
   const attachments = [];
-  if (appt.medicalImageUrl) {
+  const imageUrl = appt.medicalImageUrl || appt.medicalImage?.secureUrl;
+  if (imageUrl) {
     attachments.push({
       id: `img-${appt._id}`,
-      fileName: appt.medicalImageUrl.split("/").pop() || "Medical_XRay_Scan.jpg",
+      fileName: imageUrl.split("/").pop() || "Medical_XRay_Scan.jpg",
       fileType: "image/jpeg",
-      url: getAssetUrl(appt.medicalImageUrl)
+      url: getAssetUrl(imageUrl)
     });
   }
 

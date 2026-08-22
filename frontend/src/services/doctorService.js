@@ -233,7 +233,7 @@ function adaptQueueEntryForDoctor(entry) {
     symptomsDescription: appt.symptomsDescription || "",
     isAccident: Boolean(appt.isAccident),
     accidentSeverity: appt.accidentSeverity || "NONE",
-    medicalImageUrl: appt.medicalImageUrl ? getAssetUrl(appt.medicalImageUrl) : null,
+    medicalImageUrl: (appt.medicalImageUrl || appt.medicalImage?.secureUrl) ? getAssetUrl(appt.medicalImageUrl || appt.medicalImage?.secureUrl) : null,
     aiAssessment: {
       urgencyLevel: ai.urgencyLevel || entry.priorityLevel,
       riskLevel: ai.riskLevel || "MODERATE",
@@ -247,7 +247,7 @@ function adaptQueueEntryForDoctor(entry) {
       imageScore: img.imageScore || 0,
       confidenceSignal: img.confidenceSignal || 0.85,
       possibleFindings: img.possibleFindings || [],
-      imageUrl: img.imageUrl ? getAssetUrl(img.imageUrl) : (appt.medicalImageUrl ? getAssetUrl(appt.medicalImageUrl) : null)
+      imageUrl: img.imageUrl ? getAssetUrl(img.imageUrl) : ((appt.medicalImageUrl || appt.medicalImage?.secureUrl) ? getAssetUrl(appt.medicalImageUrl || appt.medicalImage?.secureUrl) : null)
     } : null
   };
 }
@@ -275,6 +275,7 @@ function adaptClinicalRecord(data) {
   const img = data.imageAnalysis || {};
   const queueEntry = data.queueEntry || {};
   const past = data.pastConsultations || [];
+  const resolvedImageUrl = (appt.medicalImageUrl || appt.medicalImage?.secureUrl) ? getAssetUrl(appt.medicalImageUrl || appt.medicalImage?.secureUrl) : null;
 
   return {
     queueEntryId: queueEntry._id,
@@ -299,7 +300,7 @@ function adaptClinicalRecord(data) {
       staffSeverity: appt.staffSeverity,
       isAccident: appt.isAccident,
       accidentSeverity: appt.accidentSeverity,
-      medicalImageUrl: appt.medicalImageUrl ? getAssetUrl(appt.medicalImageUrl) : null
+      medicalImageUrl: resolvedImageUrl
     },
     aiAnalysis: ai._id ? {
       urgencyLevel: ai.urgencyLevel,
@@ -321,7 +322,7 @@ function adaptClinicalRecord(data) {
       imageScore: img.imageScore,
       possibleFindings: img.possibleFindings || [],
       confidenceSignal: img.confidenceSignal,
-      imageUrl: img.imageUrl ? getAssetUrl(img.imageUrl) : (appt.medicalImageUrl ? getAssetUrl(appt.medicalImageUrl) : null)
+      imageUrl: img.imageUrl ? getAssetUrl(img.imageUrl) : resolvedImageUrl
     } : null,
     timeline: past.length > 0 ? past.map((c, idx) => ({
       id: c._id || `past-${idx}`,

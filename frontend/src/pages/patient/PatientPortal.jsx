@@ -28,6 +28,7 @@ export const PatientPortal = () => {
   const [selectedFile, setSelectedFile] = useState(null);
   const [filePreview, setFilePreview] = useState(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [submitError, setSubmitError] = useState(null);
   const [searchToken, setSearchToken] = useState("");
   const [searchedData, setSearchedData] = useState({
     tokenNumber: "TKN-042",
@@ -81,7 +82,10 @@ export const PatientPortal = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    if (isSubmitting) return; // Prevent duplicate clicks and submissions
+
     setIsSubmitting(true);
+    setSubmitError(null);
 
     try {
       const payload = {
@@ -98,9 +102,16 @@ export const PatientPortal = () => {
       if (result.success) {
         setBookingSuccess(result.data || result);
         socketService.emit("appointment-created", result.data || result);
+        setSubmitError(null);
+      } else {
+        const errorMsg = result.message || "Unable to create appointment. Please check your inputs and try again.";
+        setSubmitError(errorMsg);
+        console.error("[Appointment Submission Error]:", result.message);
       }
     } catch (err) {
-      console.error("Booking error:", err);
+      const errorMsg = err.message || "An unexpected error occurred while submitting your appointment.";
+      setSubmitError(errorMsg);
+      console.error("[Booking Submission Exception]:", err);
     } finally {
       setIsSubmitting(false);
     }
@@ -180,6 +191,27 @@ export const PatientPortal = () => {
                 Dismiss
               </button>
             </div>
+          </div>
+        )}
+
+        {/* Error Alert Banner if submission fails */}
+        {submitError && (
+          <div className="w-full max-w-full bg-error-container border border-error/30 text-error rounded-xl p-4 sm:p-5 shadow-sm animate-fade-in-up flex items-start justify-between gap-3">
+            <div className="flex items-start gap-3 min-w-0">
+              <span className="material-symbols-outlined text-2xl shrink-0 mt-0.5">error</span>
+              <div className="min-w-0">
+                <h4 className="font-bold text-sm sm:text-base">Unable to Generate Appointment Token</h4>
+                <p className="text-xs sm:text-sm text-error/90 mt-0.5">{submitError}</p>
+              </div>
+            </div>
+            <button
+              type="button"
+              onClick={() => setSubmitError(null)}
+              className="text-error hover:opacity-75 p-1 shrink-0"
+              title="Dismiss error"
+            >
+              <span className="material-symbols-outlined text-lg">close</span>
+            </button>
           </div>
         )}
 
@@ -331,10 +363,13 @@ export const PatientPortal = () => {
                   <button
                     type="submit"
                     disabled={isSubmitting}
-                    className="w-full sm:w-auto bg-primary text-on-primary hover:bg-on-primary-fixed-variant px-8 py-2.5 rounded-md font-title-md text-[16px] shadow-sm transition-all active:scale-95 flex items-center justify-center gap-2"
+                    className="w-full sm:w-auto bg-primary text-on-primary hover:bg-on-primary-fixed-variant disabled:opacity-60 disabled:cursor-not-allowed px-8 py-2.5 rounded-md font-title-md text-[16px] shadow-sm transition-all active:scale-95 flex items-center justify-center gap-2"
                   >
                     {isSubmitting ? (
-                      <span>Generating Token...</span>
+                      <>
+                        <span className="w-4 h-4 border-2 border-white/40 border-t-white rounded-full animate-spin"></span>
+                        <span>Generating Token...</span>
+                      </>
                     ) : (
                       <>
                         <span>Generate Token</span>
