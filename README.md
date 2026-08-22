@@ -8,36 +8,36 @@ A production-grade, clinical-grade intelligent queue management system built for
 
 ```mermaid
 graph TD
-    subgraph Frontend [React + Vite + Tailwind CSS]
-        P[Patient Portal & Tracking]
-        S[Staff Triage & Verification]
-        D[Doctor Smart Priority Queue]
-        Q[Live Hospital Queue]
+    subgraph Frontend ["Frontend (React + Vite + Tailwind)"]
+        P["Patient Portal & Tracking"]
+        S["Staff Triage & Verification"]
+        D["Doctor Smart Priority Queue"]
+        Q["Live Hospital Queue"]
     end
 
-    subgraph Backend [Node.js + Express + Socket.IO]
-        API[REST API Gateway]
-        Auth[JWT Role-Based Auth]
-        PE[Dynamic Multi-Factor Priority Engine]
-        WS[Socket.IO Real-Time Emitter & Rooms]
+    subgraph Backend ["Backend (Node.js + Express + Socket.IO)"]
+        API["REST API Gateway"]
+        Auth["JWT Role-Based Auth"]
+        PE["Dynamic Priority Engine"]
+        WS["Socket.IO Real-Time Rooms"]
     end
 
-    subgraph AI_Layer [Dual AI Processing Pipeline]
-        Groq[Groq LLaMA 3.3 Clinical Triage]
-        PyTorch[PyTorch Image Screening Ingestion Webhook]
+    subgraph AI_Layer ["Dual AI Processing Pipeline"]
+        Groq["Groq LLaMA 3.3 Clinical Triage"]
+        PyTorch["PyTorch Image Screening Ingestion"]
     end
 
-    subgraph Database [MongoDB]
-        M_P[Patients & Appointments]
-        M_Q[Dynamic Queue Entries]
-        M_AI[AI & Image Analyses]
-        M_C[Consultations & Audit Logs]
+    subgraph Database ["MongoDB Database"]
+        M_P[("Patients & Appointments")]
+        M_Q[("Dynamic Queue Entries")]
+        M_AI[("AI & Image Analyses")]
+        M_C[("Consultations & Audit Logs")]
     end
 
-    P -->|Book Appointment / Track Token| API
-    S -->|Intake Verification & Severity Override| API
-    D -->|Start / Complete / Hold / Resume| API
-    Q -->|Live Status & Statistics| API
+    P -->|Book & Track Token| API
+    S -->|Intake Verification| API
+    D -->|Consultation Actions| API
+    Q -->|Live Status Query| API
 
     API --> Auth
     API --> M_P
@@ -45,13 +45,16 @@ graph TD
     API --> M_AI
     API --> M_C
 
-    API -->|Prompt Symptoms & Vitals| Groq
-    PyTorch -->|POST Screening Score & Findings| API
+    API -->|Clinical Triage Request| Groq
+    PyTorch -->|Screening Signal Webhook| API
     Groq --> PE
     PyTorch --> PE
     PE --> M_Q
     PE -->|Broadcast Priority Updates| WS
-    WS <-->|WebSockets (staff, doctor, patient rooms)| Frontend
+    WS -.->|Real-Time Push Events| P
+    WS -.->|Real-Time Push Events| S
+    WS -.->|Real-Time Push Events| D
+    WS -.->|Real-Time Push Events| Q
 ```
 
 ---
