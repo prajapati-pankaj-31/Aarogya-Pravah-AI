@@ -50,6 +50,14 @@ const medicalImageAnalysisSchema = new mongoose.Schema(
     findingsDetails: {
       type: mongoose.Schema.Types.Mixed,
     },
+    publicId: {
+      type: String,
+      trim: true,
+    },
+    assetId: {
+      type: String,
+      trim: true,
+    },
     imageUrl: {
       type: String,
       trim: true,
