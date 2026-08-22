@@ -1,0 +1,130 @@
+const mongoose = require('mongoose');
+
+const appointmentStatusEnum = [
+  'PENDING_STAFF_VERIFICATION',
+  'VERIFIED',
+  'REQUIRES_CLARIFICATION',
+  'REJECTED',
+  'WAITING',
+  'IN_CONSULTATION',
+  'PENDING',
+  'COMPLETED',
+  'CANCELLED',
+];
+
+const severityEnum = ['LOW', 'MEDIUM', 'HIGH', 'CRITICAL'];
+const accidentSeverityEnum = ['NONE', 'EASY', 'MEDIUM', 'HIGH'];
+
+const appointmentSchema = new mongoose.Schema(
+  {
+    tokenNumber: {
+      type: String,
+      required: true,
+      unique: true,
+      index: true,
+    },
+    patient: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'Patient',
+      required: true,
+    },
+    department: {
+      type: String,
+      required: [true, 'Department is required'],
+      default: 'General Medicine',
+      trim: true,
+    },
+    possibleCondition: {
+      type: String,
+      trim: true,
+    },
+    symptoms: {
+      type: [String],
+      required: [true, 'At least one symptom is required'],
+    },
+    symptomsDescription: {
+      type: String,
+      trim: true,
+    },
+    reportedSeverity: {
+      type: String,
+      enum: severityEnum,
+      default: 'MEDIUM',
+    },
+    staffSeverity: {
+      type: String,
+      enum: severityEnum,
+    },
+    isAccident: {
+      type: Boolean,
+      default: false,
+    },
+    accidentSeverity: {
+      type: String,
+      enum: accidentSeverityEnum,
+      default: 'NONE',
+    },
+    medicalImageUrl: {
+      type: String,
+      trim: true,
+    },
+    medicalImageType: {
+      type: String,
+      enum: ['X-RAY', 'CT-SCAN', 'MRI', 'PHOTO', 'OTHER', 'NONE'],
+      default: 'NONE',
+    },
+    appointmentDate: {
+      type: Date,
+      default: Date.now,
+    },
+    status: {
+      type: String,
+      enum: appointmentStatusEnum,
+      default: 'PENDING_STAFF_VERIFICATION',
+      index: true,
+    },
+    initialEstimatedWaitMinutes: {
+      type: Number,
+      default: 15,
+    },
+    verifiedBy: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'User',
+    },
+    verificationNotes: {
+      type: String,
+      trim: true,
+    },
+    clarificationReason: {
+      type: String,
+      trim: true,
+    },
+    rejectionReason: {
+      type: String,
+      trim: true,
+    },
+    assignedDoctor: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'User',
+    },
+    queueEntry: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'QueueEntry',
+    },
+  },
+  {
+    timestamps: true,
+  }
+);
+
+// Helpful index for department and status queries
+appointmentSchema.index({ department: 1, status: 1 });
+appointmentSchema.index({ createdAt: -1 });
+
+const Appointment = mongoose.model('Appointment', appointmentSchema);
+module.exports = {
+  Appointment,
+  appointmentStatusEnum,
+  severityEnum,
+  accidentSeverityEnum,
+};
