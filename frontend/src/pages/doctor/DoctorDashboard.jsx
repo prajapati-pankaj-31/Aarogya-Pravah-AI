@@ -536,6 +536,10 @@ export const DoctorDashboard = () => {
                               {patient.tokenNumber}
                             </span>
 
+                            <span className="px-2 py-0.5 bg-surface-container text-on-surface rounded text-xs font-bold font-data-display border border-outline-variant/60">
+                              #{patient.queuePosition || index + 1}
+                            </span>
+
                             {isConsulting && (
                               <span className="px-2 py-0.5 bg-emerald-600 text-white rounded text-xs font-bold animate-pulse flex items-center gap-1">
                                 <span className="w-1.5 h-1.5 rounded-full bg-white"></span>
@@ -558,6 +562,8 @@ export const DoctorDashboard = () => {
                             <span><strong>Dept:</strong> {patient.department}</span>
                             <span>•</span>
                             <span><strong>Wait Time:</strong> {patient.waitTime}</span>
+                            <span>•</span>
+                            <span><strong>Urgency:</strong> {ai.urgencyLevel || patient.priorityLevel}</span>
                             <span>•</span>
                             <span><strong>Arrival:</strong> {patient.arrivalTime || "Recent"}</span>
                           </div>
@@ -585,7 +591,8 @@ export const DoctorDashboard = () => {
                           {img && (
                             <p className="text-[10px] text-secondary font-semibold flex items-center gap-1 border-t border-outline-variant/40 pt-1">
                               <span className="material-symbols-outlined text-xs">radiology</span>
-                              X-Ray Screening: {img.screeningStatus}
+                              X-Ray Screening: {img.screeningStatus === "NORMAL" ? "No Finding" : img.screeningStatus}
+                              {img.confidenceSignal ? ` (${(img.confidenceSignal * 100).toFixed(1)}%)` : ""}
                             </p>
                           )}
                         </div>

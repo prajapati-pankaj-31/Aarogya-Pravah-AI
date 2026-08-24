@@ -194,14 +194,22 @@ function adaptAppointmentForStaff(appt) {
   const symptomsStr = Array.isArray(appt.symptoms) ? appt.symptoms.join(", ") : (appt.symptoms || "");
   const createdDate = appt.createdAt ? new Date(appt.createdAt) : new Date();
 
+  const img = appt.imageAnalysis || null;
+  const ai = appt.aiAnalysis || null;
+
   const attachments = [];
-  const imageUrl = appt.medicalImageUrl || appt.medicalImage?.secureUrl;
+  const imageUrl = appt.medicalImageUrl || appt.medicalImage?.secureUrl || img?.imageUrl;
   if (imageUrl) {
     attachments.push({
       id: `img-${appt._id}`,
       fileName: imageUrl.split("/").pop() || "Medical_XRay_Scan.jpg",
       fileType: "image/jpeg",
-      url: getAssetUrl(imageUrl)
+      url: getAssetUrl(imageUrl),
+      screeningStatus: img?.screeningStatus || "SCREENING_PENDING",
+      imageScore: img?.imageScore || 0,
+      confidenceSignal: img?.confidenceSignal || 0,
+      possibleFindings: img?.possibleFindings || [],
+      findingsDetails: img?.findingsDetails || {},
     });
   }
 
@@ -226,10 +234,25 @@ function adaptAppointmentForStaff(appt) {
     symptoms: symptomsStr,
     symptomsDescription: appt.symptomsDescription || "",
     possibleCondition: appt.possibleCondition || "",
+    imageAnalysis: img ? {
+      screeningStatus: img.screeningStatus,
+      imageScore: img.imageScore,
+      possibleFindings: img.possibleFindings || [],
+      findingsDetails: img.findingsDetails || {},
+      confidenceSignal: img.confidenceSignal || 0,
+      imageUrl: img.imageUrl ? getAssetUrl(img.imageUrl) : (imageUrl ? getAssetUrl(imageUrl) : null),
+    } : null,
+    aiAnalysis: ai ? {
+      urgencyLevel: ai.urgencyLevel,
+      riskLevel: ai.riskLevel,
+      priorityRecommendation: ai.priorityRecommendation,
+      reason: ai.reason,
+    } : null,
     aiPreliminary: {
-      suggestedDisease: appt.possibleCondition || "Preliminary AI Assessment In Progress...",
+      suggestedDisease: appt.possibleCondition || ai?.reason || "Preliminary AI Assessment In Progress...",
       urgencyScore: appt.reportedSeverity === "CRITICAL" ? 95 : appt.reportedSeverity === "HIGH" ? 75 : 50,
-      riskLevel: appt.reportedSeverity || "MEDIUM"
+      riskLevel: ai?.riskLevel || appt.reportedSeverity || "MEDIUM",
+      urgencyLevel: ai?.urgencyLevel || "MEDIUM",
     },
     attachments
   };

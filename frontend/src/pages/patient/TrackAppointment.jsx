@@ -166,6 +166,54 @@ export const TrackAppointment = () => {
                 </div>
               )}
 
+              {/* Preliminary X-Ray & AI Screening Card */}
+              {tokenData.medicalImageAnalysis && (
+                <div className="p-5 bg-surface-container-lowest border border-primary/20 rounded-xl space-y-3">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2 text-primary font-bold text-sm">
+                      <span className="material-symbols-outlined text-base">radiology</span>
+                      <span>AI Preliminary Medical Image Screening</span>
+                    </div>
+                    <span className="px-2.5 py-0.5 rounded-full text-xs font-semibold bg-primary-container text-on-primary-container">
+                      {tokenData.medicalImageAnalysis.status === "ANALYZED" ? "Completed" : "Processing"}
+                    </span>
+                  </div>
+
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs">
+                    <div className="p-3 bg-surface-container-low rounded border border-outline-variant/60">
+                      <p className="text-secondary font-semibold uppercase text-[10px]">Screening Result</p>
+                      <p className="text-on-surface font-bold text-sm mt-0.5">
+                        {tokenData.medicalImageAnalysis.screeningStatus === "NORMAL"
+                          ? "No Finding"
+                          : tokenData.medicalImageAnalysis.possibleFindings?.[0] || tokenData.medicalImageAnalysis.screeningStatus || "In Review"}
+                      </p>
+                    </div>
+
+                    <div className="p-3 bg-surface-container-low rounded border border-outline-variant/60">
+                      <p className="text-secondary font-semibold uppercase text-[10px]">Highest Screening Signal</p>
+                      <p className="text-primary font-bold text-sm mt-0.5">
+                        {(() => {
+                          const details = tokenData.medicalImageAnalysis.findingsDetails || {};
+                          const entries = Object.entries(details);
+                          if (entries.length > 0) {
+                            entries.sort((a, b) => Number(b[1]) - Number(a[1]));
+                            const [topFinding, topProb] = entries[0];
+                            return `${topFinding} — ${(Number(topProb) * 100).toFixed(2)}%`;
+                          }
+                          return tokenData.medicalImageAnalysis.confidenceSignal
+                            ? `${(tokenData.medicalImageAnalysis.confidenceSignal * 100).toFixed(2)}% signal`
+                            : "Baseline Clear";
+                        })()}
+                      </p>
+                    </div>
+                  </div>
+
+                  <p className="text-[11px] text-on-surface-variant italic">
+                    ℹ️ Preliminary AI image screening is for queue triage decision support only and does not replace a physician's clinical diagnosis.
+                  </p>
+                </div>
+              )}
+
               {/* Progress Steps */}
               <div className="border-t border-outline-variant pt-6">
                 <h3 className="text-label-sm font-label-sm uppercase text-secondary mb-4">Triage Progression</h3>

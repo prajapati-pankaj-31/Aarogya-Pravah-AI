@@ -208,14 +208,25 @@ export const DoctorPatientDetails = () => {
                       </div>
                     </div>
                     <div className="space-y-1 text-xs text-on-surface">
-                      <p className="font-semibold text-sm">PyTorch DenseNet Signal Ingestion</p>
+                      <p className="font-semibold text-sm">TensorFlow DenseNet121 Screening</p>
                       <p className="text-on-surface-variant">
-                        Screening Status: <span className="font-bold text-primary">{img?.screeningStatus || "NORMAL / CLEAR"}</span>
+                        Screening Status: <span className="font-bold text-primary">{img?.screeningStatus === "NORMAL" ? "NORMAL / No Finding" : (img?.screeningStatus || "NORMAL / CLEAR")}</span>
                       </p>
                       <p className="text-on-surface-variant">
-                        Confidence Signal: <span className="font-semibold">{img?.confidenceSignal ? `${(img.confidenceSignal * 100).toFixed(0)}%` : "92%"}</span>
+                        {img?.findingsDetails && Object.keys(img.findingsDetails).length > 0 ? (
+                          <>
+                            Top Signal: <span className="font-semibold">{(() => {
+                              const sorted = Object.entries(img.findingsDetails).sort((a, b) => Number(b[1]) - Number(a[1]));
+                              return `${sorted[0][0]} (${(Number(sorted[0][1]) * 100).toFixed(2)}%)`;
+                            })()}</span>
+                          </>
+                        ) : (
+                          <>
+                            Confidence Signal: <span className="font-semibold">{img?.confidenceSignal ? `${(img.confidenceSignal * 100).toFixed(1)}%` : "Clear"}</span>
+                          </>
+                        )}
                       </p>
-                      <p className="text-[11px] text-outline">Click image to inspect high-resolution radiograph.</p>
+                      <p className="text-[11px] text-outline">Click image to inspect radiograph. (Non-diagnostic preliminary screening)</p>
                     </div>
                   </div>
                 </div>

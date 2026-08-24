@@ -430,36 +430,87 @@ export const StaffValidation = () => {
                       </div>
                     </div>
 
-                    {/* Uploaded Attachments / X-Ray */}
-                    <div className="bg-surface border border-outline-variant rounded-lg p-5 shadow-sm">
-                      <h3 className="text-label-sm text-secondary uppercase text-xs mb-4 flex items-center gap-2 font-bold">
-                        <span className="material-symbols-outlined text-[16px]">radiology</span> Uploaded Attachments
-                      </h3>
-                      <div className="flex flex-wrap gap-4">
-                        {selectedPatient.attachments && selectedPatient.attachments.length > 0 ? (
-                          selectedPatient.attachments.map((att) => (
-                            <div
-                              key={att.id}
-                              onClick={() => setModalImage(att.url)}
-                              className="w-44 h-44 bg-surface-container border border-outline-variant rounded-lg overflow-hidden relative group cursor-pointer shadow-sm"
-                            >
-                              <img
-                                src={att.url}
-                                alt={att.fileName}
-                                className="w-full h-full object-cover grayscale mix-blend-multiply opacity-80 group-hover:scale-105 transition-transform"
-                              />
-                              <div className="absolute inset-0 bg-inverse-surface/60 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
-                                <span className="material-symbols-outlined text-white text-[32px]">zoom_in</span>
+                    {/* Uploaded Attachments & X-Ray Preliminary Screening */}
+                    <div className="bg-surface border border-outline-variant rounded-lg p-5 shadow-sm space-y-4">
+                      <div className="flex items-center justify-between">
+                        <h3 className="text-label-sm text-secondary uppercase text-xs flex items-center gap-2 font-bold">
+                          <span className="material-symbols-outlined text-[16px]">radiology</span>
+                          Medical Imaging & Preliminary ML Screening
+                        </h3>
+                        <span className="text-[10px] text-secondary italic">
+                          DenseNet AI screening is decision support — not a clinical diagnosis.
+                        </span>
+                      </div>
+
+                      {selectedPatient.attachments && selectedPatient.attachments.length > 0 ? (
+                        selectedPatient.attachments.map((att) => {
+                          const img = selectedPatient.imageAnalysis || att;
+                          const details = img.findingsDetails || {};
+                          const sortedEntries = Object.entries(details).sort((a, b) => Number(b[1]) - Number(a[1]));
+                          const topSignal = sortedEntries.length > 0
+                            ? `${sortedEntries[0][0]} (${(Number(sortedEntries[0][1]) * 100).toFixed(2)}%)`
+                            : "Baseline Clear";
+
+                          return (
+                            <div key={att.id} className="flex flex-col md:flex-row gap-5 items-start bg-surface-container-low p-4 rounded-lg border border-outline-variant/60">
+                              {/* Thumbnail */}
+                              <div
+                                onClick={() => setModalImage(att.url)}
+                                className="w-40 h-40 bg-surface-container border border-outline-variant rounded-lg overflow-hidden relative group cursor-pointer shadow-sm shrink-0"
+                              >
+                                <img
+                                  src={att.url}
+                                  alt={att.fileName}
+                                  className="w-full h-full object-cover grayscale mix-blend-multiply opacity-90 group-hover:scale-105 transition-transform"
+                                />
+                                <div className="absolute inset-0 bg-inverse-surface/60 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+                                  <span className="material-symbols-outlined text-white text-[32px]">zoom_in</span>
+                                </div>
+                                <div className="absolute bottom-0 left-0 w-full bg-surface/90 p-1 text-center text-[10px] text-on-surface font-medium truncate">
+                                  Click to Expand
+                                </div>
                               </div>
-                              <div className="absolute bottom-0 left-0 w-full bg-surface/90 p-1.5 text-center text-label-sm text-xs text-on-surface font-medium truncate">
-                                {att.fileName}
+
+                              {/* ML Signals Grid */}
+                              <div className="flex-1 space-y-2 text-xs">
+                                <div className="flex items-center justify-between">
+                                  <span className="font-bold text-on-surface text-sm">{att.fileName}</span>
+                                  <span className={`px-2 py-0.5 rounded text-[11px] font-bold ${
+                                    img.screeningStatus === "CRITICAL_ABNORMALITY_DETECTED"
+                                      ? "bg-error text-on-error"
+                                      : img.screeningStatus === "MODERATE_FINDINGS"
+                                      ? "bg-amber-600 text-white"
+                                      : "bg-emerald-600 text-white"
+                                  }`}>
+                                    {img.screeningStatus || "Screening In Progress"}
+                                  </span>
+                                </div>
+
+                                <div className="grid grid-cols-2 gap-2 text-xs">
+                                  <div className="p-2 bg-surface rounded border border-outline-variant/50">
+                                    <p className="text-[10px] text-secondary font-semibold uppercase">Predicted Labels</p>
+                                    <p className="font-semibold text-on-surface mt-0.5">
+                                      {img.possibleFindings && img.possibleFindings.length > 0
+                                        ? img.possibleFindings.join(", ")
+                                        : "No Finding"}
+                                    </p>
+                                  </div>
+                                  <div className="p-2 bg-surface rounded border border-outline-variant/50">
+                                    <p className="text-[10px] text-secondary font-semibold uppercase">Highest Signal</p>
+                                    <p className="font-semibold text-primary mt-0.5">{topSignal}</p>
+                                  </div>
+                                </div>
+
+                                <p className="text-[11px] text-on-surface-variant">
+                                  <strong>ML Image Score:</strong> {img.imageScore !== undefined ? img.imageScore : "0.200"} / 1.0 (Threshold: 0.50)
+                                </p>
                               </div>
                             </div>
-                          ))
-                        ) : (
-                          <p className="text-xs text-on-surface-variant py-4">No attachments uploaded by patient.</p>
-                        )}
-                      </div>
+                          );
+                        })
+                      ) : (
+                        <p className="text-xs text-on-surface-variant py-2">No medical images uploaded for this intake.</p>
+                      )}
                     </div>
                   </div>
 

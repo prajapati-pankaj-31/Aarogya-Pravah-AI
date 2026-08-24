@@ -131,10 +131,13 @@ export const appointmentService = {
             estimatedWaitTime: d.estimatedWaitMinutes !== null ? `${d.estimatedWaitMinutes} min` : (d.status === "IN_CONSULTATION" ? "0 min" : "Calculating..."),
             estimatedWaitMinutes: d.estimatedWaitMinutes,
             priorityLevel: d.priorityLevel || "STANDARD",
+            priorityScore: d.priorityScore || 0,
             isPending: d.isPending || false,
             pendingReason: d.pendingReason || null,
             assignedDoctor: d.assignedDoctor || null,
             departmentQueueStats: d.departmentQueueStats || { totalWaiting: 0, currentServingToken: "None" },
+            medicalImageAnalysis: d.medicalImageAnalysis || null,
+            aiAnalysis: d.aiAnalysis || null,
             lastUpdated: d.lastUpdated
           }
         };

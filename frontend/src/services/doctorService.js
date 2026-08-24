@@ -223,9 +223,11 @@ function adaptQueueEntryForDoctor(entry) {
     arrivalTime: checkIn.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
     waitTime: entry.estimatedWaitMinutes !== undefined ? `${entry.estimatedWaitMinutes} min` : "15 min",
     estimatedWaitMinutes: entry.estimatedWaitMinutes || 0,
+    queuePosition: entry.queuePosition || 1,
     department: entry.department,
     priorityScore: entry.priorityScore || 50,
     priorityLevel: entry.priorityLevel || "MEDIUM",
+    scoreBreakdown: entry.scoreBreakdown || {},
     status: entry.status === "IN_CONSULTATION" ? "In Consultation" : (entry.isPending ? "Hold" : "Waiting"),
     rawStatus: entry.status,
     isPending: entry.isPending || false,
@@ -247,6 +249,7 @@ function adaptQueueEntryForDoctor(entry) {
       imageScore: img.imageScore || 0,
       confidenceSignal: img.confidenceSignal || 0.85,
       possibleFindings: img.possibleFindings || [],
+      findingsDetails: img.findingsDetails || {},
       imageUrl: img.imageUrl ? getAssetUrl(img.imageUrl) : ((appt.medicalImageUrl || appt.medicalImage?.secureUrl) ? getAssetUrl(appt.medicalImageUrl || appt.medicalImage?.secureUrl) : null)
     } : null
   };
@@ -281,6 +284,10 @@ function adaptClinicalRecord(data) {
     queueEntryId: queueEntry._id,
     appointmentId: appt._id,
     tokenNumber: appt.tokenNumber,
+    queuePosition: queueEntry.queuePosition || 1,
+    priorityScore: queueEntry.priorityScore || 50,
+    priorityLevel: queueEntry.priorityLevel || "MEDIUM",
+    scoreBreakdown: queueEntry.scoreBreakdown || {},
     patient: {
       id: patient._id,
       fullName: patient.name || "Patient Record",
@@ -321,6 +328,7 @@ function adaptClinicalRecord(data) {
       screeningStatus: img.screeningStatus,
       imageScore: img.imageScore,
       possibleFindings: img.possibleFindings || [],
+      findingsDetails: img.findingsDetails || {},
       confidenceSignal: img.confidenceSignal,
       imageUrl: img.imageUrl ? getAssetUrl(img.imageUrl) : resolvedImageUrl
     } : null,
