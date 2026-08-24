@@ -4,11 +4,149 @@ const { updateAppointmentPriority } = require('../services/queueService');
 const { socketEmitter } = require('../sockets/socketEmitter');
 const logger = require('../utils/logger');
 
-const pytorchServiceUrl = process.env.PYTORCH_SERVICE_URL;
-const pytorchTimeoutMs = parseInt(process.env.PYTORCH_SERVICE_TIMEOUT, 10) || 10000;
+const getModelServiceUrl = () => {
+  return (
+    process.env.MODEL_SERVICE_URL ||
+    process.env.PYTORCH_SERVICE_URL ||
+    'http://localhost:8001'
+  );
+};
+
+const getModelServiceTimeout = () => {
+  return (
+    parseInt(process.env.MODEL_SERVICE_TIMEOUT, 10) ||
+    parseInt(process.env.PYTORCH_SERVICE_TIMEOUT, 10) ||
+    15000
+  );
+};
 
 /**
- * Process a screening result payload from the PyTorch service (or webhook),
+ * Interpret TensorFlow/Keras DenseNet prediction probabilities and labels.
+ * Computes a normalized imageScore (0.0 to 1.0) and administrative screening status.
+ */
+const interpretModelPredictions = (predictedLabels = [], probabilities = {}) => {
+  const cleanLabels = Array.isArray(predictedLabels)
+    ? predictedLabels.filter((l) => l && l !== 'No Finding')
+    : [];
+
+  const probValues = Object.values(probabilities)
+    .map((v) => Number(v))
+    .filter((v) => !isNaN(v));
+  const maxProb = probValues.length > 0 ? Math.max(...probValues) : 0.0;
+
+  // High-urgency classes in the 14-class DenseNet thoracic model
+  const criticalClasses = ['Pneumothorax', 'Edema', 'Consolidation', 'Mass'];
+  const hasCriticalClass = cleanLabels.some((l) => criticalClasses.includes(l));
+
+  let screeningStatus = 'NORMAL';
+  let imageScore = maxProb;
+
+  if (cleanLabels.length === 0 || maxProb < 0.25) {
+    screeningStatus = 'NORMAL';
+    imageScore = Math.min(maxProb, 0.2);
+  } else if (hasCriticalClass || maxProb >= 0.75) {
+    screeningStatus = 'CRITICAL_ABNORMALITY_DETECTED';
+    imageScore = Math.max(maxProb, 0.85);
+  } else if (maxProb >= 0.5) {
+    screeningStatus = 'MODERATE_FINDINGS';
+    imageScore = maxProb;
+  } else {
+    screeningStatus = 'MILD_FINDINGS';
+    imageScore = maxProb;
+  }
+
+  return {
+    screeningStatus,
+    imageScore: Number(imageScore.toFixed(3)),
+    possibleFindings:
+      cleanLabels.length > 0 ? cleanLabels : ['No Significant Abnormality Detected'],
+    findingsDetails: probabilities,
+    confidenceSignal: Number(maxProb.toFixed(3)),
+    modelVersion: 'tensorflow-keras-densenet-v1.0',
+  };
+};
+
+/**
+ * Direct synchronous call to FastAPI ML screening service
+ * @param {string} imageUrl - Cloudinary secure URL
+ */
+const screenXrayImage = async (imageUrl) => {
+  if (!imageUrl) {
+    throw new Error('Image URL is required for medical image screening.');
+  }
+
+  const modelServiceUrl = getModelServiceUrl();
+  const timeoutMs = getModelServiceTimeout();
+
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
+
+  const response = await fetch(`${modelServiceUrl.replace(/\/$/, '')}/predict`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'User-Agent': 'Aarogya-Pravah-AI-Backend/1.0',
+    },
+    body: JSON.stringify({ image_url: imageUrl }),
+    signal: controller.signal,
+  });
+
+  clearTimeout(timeoutId);
+
+  if (!response.ok) {
+    throw new Error(`ML service responded with HTTP status ${response.status}`);
+  }
+
+  const data = await response.json();
+  return interpretModelPredictions(data.predicted_labels, data.probabilities);
+};
+
+/**
+ * Check health status of external FastAPI ML Screening Service
+ */
+const checkModelServiceHealth = async () => {
+  const modelServiceUrl = getModelServiceUrl();
+  try {
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 3000);
+
+    const response = await fetch(`${modelServiceUrl.replace(/\/$/, '')}/health`, {
+      method: 'GET',
+      headers: { 'User-Agent': 'Aarogya-Pravah-AI-Backend/1.0' },
+      signal: controller.signal,
+    });
+
+    clearTimeout(timeoutId);
+
+    if (response.ok) {
+      const data = await response.json();
+      return {
+        connected: true,
+        status: data.status || 'ok',
+        modelLoaded: Boolean(data.model_loaded),
+        serviceUrl: modelServiceUrl,
+      };
+    }
+
+    return {
+      connected: false,
+      status: `HTTP ${response.status}`,
+      modelLoaded: false,
+      serviceUrl: modelServiceUrl,
+    };
+  } catch (err) {
+    return {
+      connected: false,
+      status: 'UNAVAILABLE',
+      modelLoaded: false,
+      error: err.message,
+      serviceUrl: modelServiceUrl,
+    };
+  }
+};
+
+/**
+ * Process a screening result payload from the ML service (or webhook),
  * persist the screening metadata in MongoDB, recalculate queue priority,
  * and broadcast real-time updates to staff and doctors.
  */
@@ -18,7 +156,7 @@ const processScreeningResult = async ({
   screeningStatus = 'NORMAL',
   imageScore = 0.0,
   possibleFindings = [],
-  modelVersion = 'pytorch-med-screen-v1.0',
+  modelVersion = 'tensorflow-keras-densenet-v1.0',
   confidenceSignal = 0.85,
   findingsDetails = {},
   imageUrl,
@@ -57,7 +195,9 @@ const processScreeningResult = async ({
   } else {
     imageRecord.screeningStatus = screeningStatus;
     imageRecord.imageScore = Number(imageScore);
-    imageRecord.possibleFindings = Array.isArray(possibleFindings) ? possibleFindings : [possibleFindings];
+    imageRecord.possibleFindings = Array.isArray(possibleFindings)
+      ? possibleFindings
+      : [possibleFindings];
     imageRecord.modelVersion = modelVersion;
     imageRecord.confidenceSignal = Number(confidenceSignal);
     imageRecord.findingsDetails = findingsDetails;
@@ -77,7 +217,7 @@ const processScreeningResult = async ({
   }
 
   logger.info(
-    `[PyTorch Screening Processed] Token: ${appointment.tokenNumber}, Status: ${screeningStatus}, Score: ${imageScore}`
+    `[ML Screening Processed] Token: ${appointment.tokenNumber}, Status: ${screeningStatus}, Score: ${imageScore}`
   );
 
   // 3. Recalculate priority score dynamically using the new image score
@@ -104,7 +244,7 @@ const processScreeningResult = async ({
 };
 
 /**
- * Asynchronously triggers external Python/PyTorch image screening without blocking
+ * Asynchronously triggers external FastAPI ML image screening without blocking
  * the patient's appointment creation or token issuance.
  */
 const triggerAsyncImageAnalysis = async ({
@@ -115,10 +255,13 @@ const triggerAsyncImageAnalysis = async ({
   imageId,
   publicId,
 }) => {
+  const modelServiceUrl = getModelServiceUrl();
+  const timeoutMs = getModelServiceTimeout();
+
   // If no Python ML service URL is configured, mark status as ANALYSIS_PENDING
-  if (!pytorchServiceUrl) {
+  if (!modelServiceUrl) {
     logger.info(
-      `[Image Screening Service] PYTORCH_SERVICE_URL is not set. Image analysis for Token: ${tokenNumber} remains pending until webhook ingestion.`
+      `[Image Screening Service] MODEL_SERVICE_URL is not set. Image analysis for Token: ${tokenNumber} remains pending.`
     );
     try {
       await Appointment.findByIdAndUpdate(appointmentId, {
@@ -140,55 +283,52 @@ const triggerAsyncImageAnalysis = async ({
       });
 
       const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), pytorchTimeoutMs);
+      const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
 
-      // Clean request payload: Never expose Cloudinary secrets
-      const requestPayload = {
-        appointmentId: String(appointmentId),
-        tokenNumber,
-        patientId: String(patientId),
-        imageUrl,
-        imageId: imageId || publicId,
-        requestId: `req_${Date.now()}_${String(appointmentId).slice(-6)}`,
-      };
-
-      const response = await fetch(`${pytorchServiceUrl.replace(/\/$/, '')}/api/v1/screen-xray`, {
+      // Clean request payload: Send Cloudinary secure_url only, never exposing API secrets
+      const response = await fetch(`${modelServiceUrl.replace(/\/$/, '')}/predict`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
           'User-Agent': 'Aarogya-Pravah-AI-Backend/1.0',
         },
-        body: JSON.stringify(requestPayload),
+        body: JSON.stringify({ image_url: imageUrl }),
         signal: controller.signal,
       });
 
       clearTimeout(timeoutId);
 
       if (!response.ok) {
-        throw new Error(`PyTorch service responded with HTTP status ${response.status}`);
+        throw new Error(`FastAPI ML service responded with HTTP status ${response.status}`);
       }
 
       const data = await response.json();
 
-      if (data.success && data.screening) {
+      if (data && (data.predicted_labels || data.probabilities)) {
+        const interpretation = interpretModelPredictions(
+          data.predicted_labels,
+          data.probabilities
+        );
+
         await processScreeningResult({
           appointmentId,
           tokenNumber,
-          screeningStatus: data.screening.status || 'NORMAL',
-          imageScore: data.screening.score || 0.0,
-          possibleFindings: data.screening.findings || [],
-          modelVersion: data.screening.modelVersion || 'pytorch-med-screen-v1.0',
-          confidenceSignal: data.screening.confidenceSignal || 0.85,
-          findingsDetails: data.screening.findingsDetails || {},
+          screeningStatus: interpretation.screeningStatus,
+          imageScore: interpretation.imageScore,
+          possibleFindings: interpretation.possibleFindings,
+          modelVersion: interpretation.modelVersion,
+          confidenceSignal: interpretation.confidenceSignal,
+          findingsDetails: interpretation.findingsDetails,
           imageUrl,
           publicId,
+          assetId: imageId,
         });
       } else {
-        throw new Error(data.message || 'Unrecognized response format from PyTorch service.');
+        throw new Error('Unrecognized response format from FastAPI ML service.');
       }
     } catch (error) {
       logger.error(
-        `[PyTorch ML Service Error] Failed to screen image for Token ${tokenNumber}: ${error.message}`
+        `[ML Screening Service Error] Failed to screen image for Token ${tokenNumber}: ${error.message}`
       );
       try {
         await Appointment.findByIdAndUpdate(appointmentId, {
@@ -205,4 +345,7 @@ const triggerAsyncImageAnalysis = async ({
 module.exports = {
   processScreeningResult,
   triggerAsyncImageAnalysis,
+  screenXrayImage,
+  checkModelServiceHealth,
+  interpretModelPredictions,
 };

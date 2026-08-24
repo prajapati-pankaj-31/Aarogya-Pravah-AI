@@ -75,13 +75,47 @@ const appointmentLimiter = rateLimit({
   },
 });
 
-// Health check endpoint
-app.get('/api/health', (req, res) => {
+const mongoose = require('mongoose');
+const { checkAndConfigureCloudinary } = require('./config/cloudinary');
+const { checkModelServiceHealth } = require('./services/imageAnalysisService');
+
+// Comprehensive Health check endpoint
+app.get('/api/health', async (req, res) => {
+  const cloudinaryConfig = checkAndConfigureCloudinary();
+  const mlHealth = await checkModelServiceHealth();
+
+  const mongoState = mongoose.connection.readyState;
+  const mongoStatus =
+    mongoState === 1 ? 'connected' : mongoState === 2 ? 'connecting' : 'disconnected';
+
   return ApiResponse.success(res, 'Aarogya Pravah AI Backend API is healthy and running', {
     uptime: process.uptime(),
     timestamp: new Date(),
     environment: process.env.NODE_ENV || 'development',
-    groqConfigured: Boolean(process.env.GROQ_API_KEY && process.env.GROQ_API_KEY !== 'your_groq_api_key_here'),
+    subsystems: {
+      mongodb: {
+        status: mongoStatus,
+        connected: mongoState === 1,
+      },
+      cloudinary: {
+        configured: cloudinaryConfig.isConfigured,
+        folder: cloudinaryConfig.cloudinaryFolder,
+        cloudName: cloudinaryConfig.cloudName || 'not_configured',
+      },
+      groqTriage: {
+        configured: Boolean(
+          process.env.GROQ_API_KEY &&
+          process.env.GROQ_API_KEY !== 'your_groq_api_key_here'
+        ),
+        model: process.env.GROQ_MODEL || 'llama-3.3-70b-versatile',
+      },
+      mlScreeningService: {
+        connected: mlHealth.connected,
+        status: mlHealth.status,
+        modelLoaded: mlHealth.modelLoaded,
+        serviceUrl: mlHealth.serviceUrl,
+      },
+    },
   });
 });
 

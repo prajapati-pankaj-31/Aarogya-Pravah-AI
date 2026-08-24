@@ -146,7 +146,16 @@ Provide your structured JSON triage decision support:`;
       throw new Error('Empty response received from Groq API');
     }
 
-    const parsed = JSON.parse(responseContent);
+    let cleanJson = responseContent;
+    if (cleanJson.includes('</think>')) {
+      cleanJson = cleanJson.split('</think>').pop().trim();
+    }
+    const jsonMatch = cleanJson.match(/\{[\s\S]*\}/);
+    if (jsonMatch) {
+      cleanJson = jsonMatch[0];
+    }
+
+    const parsed = JSON.parse(cleanJson);
 
     // Normalize and validate output
     const validLevels = ['LOW', 'MEDIUM', 'HIGH', 'CRITICAL'];
