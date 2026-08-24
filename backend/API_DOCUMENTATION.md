@@ -407,41 +407,92 @@ Authorization: Bearer <your_jwt_token>
 
 ---
 
-## 6. AI & PyTorch Screening Webhook APIs (`/api/ai`)
+## 6. AI & Chest X-Ray Screening ML Service APIs (`/api/ai`)
 
-### 6.1 PyTorch Medical Image Screening Ingestion Webhook
+### 6.1 Chest X-Ray Screening Ingestion & Webhook
 - **Endpoint**: `POST /api/ai/image-analysis-result`
-- **Description**: Dedicated integration endpoint for external Python + PyTorch deep learning models (e.g. ResNet, DenseNet) to post preliminary screening findings.
-- **Request Body**:
+- **Description**: Ingests preliminary image screening signals from the external FastAPI TensorFlow/Keras DenseNet service (or webhook). Supports both direct FastAPI output and formatted payloads.
+- **FastAPI Direct Format**:
 ```json
 {
-  "tokenNumber": "TKN-20260822-8392",
-  "screeningStatus": "MODERATE_FINDINGS",
-  "imageScore": 0.78,
-  "possibleFindings": [
-    "Right lower lobe consolidation",
-    "Pleural thickening"
+  "tokenNumber": "TKN-20260823-9673",
+  "predicted_labels": [
+    "Effusion",
+    "Cardiomegaly"
   ],
-  "modelVersion": "pytorch-chest-xray-v2.1",
-  "confidenceSignal": 0.91,
-  "findingsDetails": {
-    "opacityLocation": "Right lower zone",
-    "cardiothoracicRatio": 0.52
+  "probabilities": {
+    "Atelectasis": 0.12,
+    "Cardiomegaly": 0.81,
+    "Consolidation": 0.08,
+    "Edema": 0.14,
+    "Effusion": 0.74,
+    "Emphysema": 0.02,
+    "Fibrosis": 0.03,
+    "Hernia": 0.01,
+    "Infiltration": 0.22,
+    "Mass": 0.04,
+    "Nodule": 0.06,
+    "Pleural_Thickening": 0.15,
+    "Pneumonia": 0.19,
+    "Pneumothorax": 0.05
+  },
+  "modelVersion": "tensorflow-keras-densenet-v1.0"
+}
+```
+- **Response (200 OK)**:
+```json
+{
+  "success": true,
+  "statusCode": 200,
+  "message": "Preliminary medical image screening signal processed and priority updated",
+  "data": {
+    "tokenNumber": "TKN-20260823-9673",
+    "imageAnalysis": {
+      "screeningStatus": "CRITICAL_ABNORMALITY_DETECTED",
+      "imageScore": 0.85,
+      "possibleFindings": ["Effusion", "Cardiomegaly"],
+      "modelVersion": "tensorflow-keras-densenet-v1.0"
+    },
+    "updatedPriority": {
+      "priorityScore": 131,
+      "priorityLevel": "CRITICAL"
+    }
   }
 }
 ```
-- **Response (200 OK)**: Ingests screening record, updates `Appointment.medicalImage.status = 'ANALYZED'`, automatically recalculates priority score, updates queue position, and emits real-time event.
 
-### 6.2 Manual Groq AI Triage Trigger
+### 6.2 Manual Screening Trigger for Existing Appointment
+- **Endpoint**: `POST /api/ai/screen-image/:appointmentId`
+- **Auth Required**: Yes (Staff/Doctor)
+- **Description**: Calls FastAPI `POST http://localhost:8001/predict` directly, updates MongoDB, recalculates priority, and returns combined prediction response.
+
+### 6.3 External ML Model Health Check
+- **Endpoint**: `GET /api/ai/model-health`
+- **Auth Required**: No
+- **Response**:
+```json
+{
+  "success": true,
+  "statusCode": 200,
+  "data": {
+    "connected": true,
+    "status": "ok",
+    "modelLoaded": true,
+    "serviceUrl": "http://localhost:8001"
+  }
+}
+```
+
+### 6.4 Manual Groq AI Triage Trigger
 - **Endpoint**: `POST /api/ai/analyze-triage/:appointmentId`
 - **Auth Required**: Yes (Staff/Doctor)
 
 ---
 
-## 7. Cloudinary Medical Image Storage & PyTorch Integration Architecture
+## 7. Cloudinary Medical Image Storage & FastAPI ML Architecture
 
 ```text
-React Frontend
+React Frontend (Patient Portal)
       ↓ (multipart/form-data via multer.memoryStorage)
 Node.js Express Backend
       ↓ (Stream Buffer via cloudinary.uploader.upload_stream)
@@ -449,9 +500,11 @@ Cloudinary Persistent Medical Storage (Folder: aarogya-pravah-ai/xrays)
       ↓ (Generates anonymous public ID: xray_anon_...)
 Node.js saves asset metadata to MongoDB (Appointment.medicalImage)
       ↓ (Async dispatch with secure URL, NO Cloudinary credentials shared)
-Python + PyTorch ML Service (POST /api/v1/screen-xray or Webhook)
-      ↓ (Returns preliminary screening signal score & findings)
-Node.js Priority Engine recalculates queue priority
+FastAPI ML Service (POST http://localhost:8001/predict with {"image_url": secure_url})
+      ↓ (Runs TensorFlow/Keras DenseNet model on 14 thoracic classes)
+Returns {"predicted_labels": [...], "probabilities": {...}}
+      ↓
+Node.js Priority Engine recalculates multi-factor priority score
       ↓ (Socket.IO priority_updated / queue_updated)
 Doctor Dashboard updates in real time
 ```
@@ -459,14 +512,12 @@ Doctor Dashboard updates in real time
 ### Server Configuration Variables
 ```env
 # Cloudinary (Server-Side Only - Never exposed to frontend)
-CLOUDINARY_CLOUD_NAME=your_cloud_name
-CLOUDINARY_API_KEY=your_api_key
-CLOUDINARY_API_SECRET=your_api_secret
+CLOUDINARY_URL=cloudinary://api_key:api_secret@cloud_name
 CLOUDINARY_FOLDER=aarogya-pravah-ai/xrays
 
-# Python ML Screening Service
-PYTORCH_SERVICE_URL=http://localhost:8000
-PYTORCH_SERVICE_TIMEOUT=10000
+# FastAPI TensorFlow/Keras ML Screening Service
+MODEL_SERVICE_URL=http://localhost:8001
+MODEL_SERVICE_TIMEOUT=15000
 ```
 
 ---

@@ -244,7 +244,26 @@ The Node.js backend communicates with the Python ML screening service via:
   }
   ```
 
-### 5. Frontend Setup
+### 5. FastAPI TensorFlow/Keras Chest X-Ray ML Service Setup
+
+```bash
+cd ml-service
+python -m venv venv
+
+# Windows
+venv\Scripts\activate
+
+# Linux / macOS
+source venv/bin/activate
+
+pip install -r requirements.txt
+
+# Start FastAPI ML Service on port 8001
+uvicorn model_service:app --host 0.0.0.0 --port 8001
+```
+*ML service listens on `http://localhost:8001`.*
+
+### 6. Frontend Setup
 
 ```bash
 cd frontend

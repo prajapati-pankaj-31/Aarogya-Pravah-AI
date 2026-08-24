@@ -7,3 +7,11 @@ uploads/*
 !uploads/.gitkeep
 logs/
 *.log
+
+# Python / ML Service
+__pycache__/
+*.py[cod]
+venv/
+.venv/
+model_cache/
+

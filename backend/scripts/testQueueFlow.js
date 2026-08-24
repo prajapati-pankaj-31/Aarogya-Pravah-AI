@@ -75,34 +75,38 @@ const runTests = async () => {
     baseUrl = `http://localhost:${testPort}`;
     console.log(`[Test Setup] Test server listening at ${baseUrl}\n`);
 
-    // TEST 1: Health Check
-    console.log('[TEST 1] Testing Health Check Endpoint (/api/health)');
+    // TEST 1: Health Check Endpoint
+    console.log('\n[TEST 1] Testing Health Check Endpoint (/api/health)');
     const healthRes = await request('GET', '/api/health');
     assert(healthRes.status === 200, 'Health endpoint returns HTTP 200');
     assert(healthRes.body.success === true, 'Health check indicates success');
+    assert(Boolean(healthRes.body.data.subsystems), 'Reports subsystem health statuses');
+    console.log(`     -> MongoDB: ${healthRes.body.data.subsystems?.mongodb?.status}`);
+    console.log(`     -> Cloudinary Configured: ${healthRes.body.data.subsystems?.cloudinary?.configured}`);
+    console.log(`     -> ML Service URL: ${healthRes.body.data.subsystems?.mlScreeningService?.serviceUrl}`);
 
-    // TEST 2: Staff & Doctor Registration / Login
+    // TEST 2: Staff & Doctor Authentication
     console.log('\n[TEST 2] Testing Staff & Doctor Authentication');
-    const staffEmail = `nurse.${Date.now()}@test.com`;
     const staffReg = await request('POST', '/api/auth/register', {
-      name: 'Nurse Fatima',
-      email: staffEmail,
-      password: 'password123',
+      name: 'Rohan Verma',
+      email: `staff.${Date.now()}@aarogyapravah.ai`,
+      password: 'Password@123',
       role: 'STAFF',
       department: 'General Medicine',
+      phoneNumber: '+91-9876543210',
     });
     assert(staffReg.status === 201, 'Staff registered with HTTP 201');
     const staffToken = staffReg.body.data.token;
     assert(Boolean(staffToken), 'Staff received valid JWT token');
 
-    const docEmail = `dr.kapoor.${Date.now()}@test.com`;
     const docReg = await request('POST', '/api/auth/register', {
-      name: 'Dr. Kabir Kapoor',
-      email: docEmail,
-      password: 'password123',
+      name: 'Dr. Ananya Iyer',
+      email: `doctor.${Date.now()}@aarogyapravah.ai`,
+      password: 'Password@123',
       role: 'DOCTOR',
       department: 'General Medicine',
-      specialization: 'Internal Medicine',
+      specialization: 'Pulmonology',
+      phoneNumber: '+91-9876543211',
     });
     assert(docReg.status === 201, 'Doctor registered with HTTP 201');
     const docToken = docReg.body.data.token;
@@ -182,24 +186,38 @@ const runTests = async () => {
 
     const queueEntryId = verifyRes.body.data.queueEntry._id;
 
-    // TEST 7: External PyTorch X-Ray Screening Webhook Ingestion
-    console.log('\n[TEST 7] Testing PyTorch Medical Image Screening Result Webhook');
+    // TEST 7: FastAPI TensorFlow/Keras DenseNet Model Prediction Ingestion
+    console.log('\n[TEST 7] Testing FastAPI TensorFlow/Keras 14-Class Screening Result Ingestion');
     const imageWebhookRes = await request('POST', '/api/ai/image-analysis-result', {
       tokenNumber,
-      screeningStatus: 'MODERATE_FINDINGS',
-      imageScore: 0.78,
-      possibleFindings: ['Bilateral infiltrates', 'Bronchial wall thickening'],
-      modelVersion: 'pytorch-chest-xray-v2.1',
-      confidenceSignal: 0.92,
-      findingsDetails: { opacities: 'Lower right lobe' },
+      predicted_labels: ['Effusion', 'Cardiomegaly'],
+      probabilities: {
+        Atelectasis: 0.12,
+        Cardiomegaly: 0.81,
+        Consolidation: 0.08,
+        Edema: 0.14,
+        Effusion: 0.74,
+        Emphysema: 0.02,
+        Fibrosis: 0.03,
+        Hernia: 0.01,
+        Infiltration: 0.22,
+        Mass: 0.04,
+        Nodule: 0.06,
+        Pleural_Thickening: 0.15,
+        Pneumonia: 0.19,
+        Pneumothorax: 0.05,
+      },
+      modelVersion: 'tensorflow-keras-densenet-v1.0',
     });
     assert(imageWebhookRes.status === 200, 'Image screening signal ingested with HTTP 200');
     assert(
+      imageWebhookRes.body.data.imageAnalysis.screeningStatus === 'CRITICAL_ABNORMALITY_DETECTED' ||
       imageWebhookRes.body.data.imageAnalysis.screeningStatus === 'MODERATE_FINDINGS',
-      'Image analysis saved'
+      'Image analysis status categorized from 14-class probabilities'
     );
     assert(Boolean(imageWebhookRes.body.data.updatedPriority), 'Priority automatically updated after screening result');
-    console.log(`     -> Recalculated Score with Image: ${imageWebhookRes.body.data.updatedPriority.priorityScore}`);
+    console.log(`     -> Screening Status: ${imageWebhookRes.body.data.imageAnalysis.screeningStatus}`);
+    console.log(`     -> Recalculated Priority Score with Image: ${imageWebhookRes.body.data.updatedPriority.priorityScore}`);
 
     // TEST 8: Doctor Dashboard Prioritized Queue View
     console.log('\n[TEST 8] Testing Doctor Queue Retrieval');
