@@ -32,10 +32,27 @@ const getPendingVerifications = async (req, res, next) => {
       .populate('patient')
       .sort({ createdAt: -1 });
 
+    const appointmentIds = appointments.map((a) => a._id);
+    const [imageAnalyses, aiAnalyses] = await Promise.all([
+      MedicalImageAnalysis.find({ appointment: { $in: appointmentIds } }),
+      AIAnalysis.find({ appointment: { $in: appointmentIds } }),
+    ]);
+
+    const imageMap = new Map(imageAnalyses.map((i) => [i.appointment.toString(), i]));
+    const aiMap = new Map(aiAnalyses.map((a) => [a.appointment.toString(), a]));
+
+    const enrichedAppointments = appointments.map((appt) => {
+      const apptObj = appt.toObject();
+      const apptId = appt._id.toString();
+      apptObj.imageAnalysis = imageMap.get(apptId) || null;
+      apptObj.aiAnalysis = aiMap.get(apptId) || null;
+      return apptObj;
+    });
+
     return ApiResponse.success(
       res,
       'Pending patient verifications retrieved',
-      { count: appointments.length, appointments }
+      { count: enrichedAppointments.length, appointments: enrichedAppointments }
     );
   } catch (error) {
     next(error);

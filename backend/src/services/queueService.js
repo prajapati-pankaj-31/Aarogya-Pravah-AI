@@ -322,7 +322,11 @@ const getPublicPatientStatus = async (tokenNumber) => {
 
   if (!appointment) return null;
 
-  const queueEntry = await QueueEntry.findOne({ appointment: appointment._id });
+  const [aiAnalysis, imageAnalysis, queueEntry] = await Promise.all([
+    AIAnalysis.findOne({ appointment: appointment._id }),
+    MedicalImageAnalysis.findOne({ appointment: appointment._id }),
+    QueueEntry.findOne({ appointment: appointment._id }),
+  ]);
 
   // Get active queue summary in this department
   const totalWaitingInDept = await QueueEntry.countDocuments({
@@ -336,6 +340,8 @@ const getPublicPatientStatus = async (tokenNumber) => {
     status: 'IN_CONSULTATION',
   }).populate('appointment', 'tokenNumber');
 
+  const resolvedImageUrl = appointment.medicalImageUrl || appointment.medicalImage?.secureUrl || null;
+
   return {
     tokenNumber: appointment.tokenNumber,
     department: appointment.department,
@@ -343,7 +349,8 @@ const getPublicPatientStatus = async (tokenNumber) => {
     status: appointment.status,
     queuePosition: queueEntry ? queueEntry.queuePosition : null,
     estimatedWaitMinutes: queueEntry ? queueEntry.estimatedWaitMinutes : appointment.initialEstimatedWaitMinutes,
-    priorityLevel: queueEntry ? queueEntry.priorityLevel : 'PENDING_TRIAGE',
+    priorityLevel: queueEntry ? queueEntry.priorityLevel : (appointment.reportedSeverity || 'MEDIUM'),
+    priorityScore: queueEntry ? queueEntry.priorityScore : 0,
     isPending: queueEntry ? queueEntry.isPending : false,
     pendingReason: queueEntry?.isPending ? queueEntry.pendingDetails?.reason : null,
     assignedDoctor: appointment.assignedDoctor ? appointment.assignedDoctor.name : null,
@@ -351,6 +358,26 @@ const getPublicPatientStatus = async (tokenNumber) => {
       totalWaiting: totalWaitingInDept,
       currentServingToken: currentServingEntry?.appointment?.tokenNumber || 'None in consultation',
     },
+    medicalImageAnalysis: imageAnalysis ? {
+      status: appointment.medicalImage?.status || 'ANALYZED',
+      screeningStatus: imageAnalysis.screeningStatus,
+      imageScore: imageAnalysis.imageScore,
+      possibleFindings: imageAnalysis.possibleFindings || [],
+      findingsDetails: imageAnalysis.findingsDetails || {},
+      confidenceSignal: imageAnalysis.confidenceSignal || 0,
+      imageUrl: imageAnalysis.imageUrl || resolvedImageUrl,
+    } : (resolvedImageUrl ? {
+      status: appointment.medicalImage?.status || 'PROCESSING',
+      screeningStatus: 'IN_PROGRESS',
+      imageUrl: resolvedImageUrl,
+    } : null),
+    aiAnalysis: aiAnalysis ? {
+      status: 'COMPLETED',
+      riskLevel: aiAnalysis.riskLevel,
+      urgencyLevel: aiAnalysis.urgencyLevel,
+      priorityRecommendation: aiAnalysis.priorityRecommendation,
+      reason: aiAnalysis.reason,
+    } : null,
     lastUpdated: new Date(),
   };
 };

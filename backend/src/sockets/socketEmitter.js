@@ -53,9 +53,21 @@ const socketEmitter = {
   /**
    * Broadcast priority score recalculation
    */
-  emitPriorityUpdated: (tokenNumber, department, priorityData) => {
+  emitPriorityUpdated: (arg1, arg2, arg3) => {
     if (!ioInstance) return;
-    ioInstance.to('staff').to('doctor').to(`department:${department}`).emit('priority_updated', {
+    let tokenNumber = arg1;
+    let department = arg2;
+    let priorityData = arg3;
+
+    // If called with (department, payloadObj)
+    if (typeof arg1 === 'string' && typeof arg2 === 'object' && !arg3) {
+      department = arg1;
+      priorityData = arg2;
+      tokenNumber = arg2.tokenNumber || null;
+    }
+
+    const targetRoom = department ? `department:${department}` : 'staff';
+    ioInstance.to('staff').to('doctor').to(targetRoom).emit('priority_updated', {
       event: 'priority_updated',
       tokenNumber,
       department,
