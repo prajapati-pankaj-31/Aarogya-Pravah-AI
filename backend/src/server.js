@@ -11,13 +11,20 @@ const PORT = process.env.PORT || 5000;
 // Connect to MongoDB
 connectDB();
 
+const { isOriginAllowed } = require('./config/corsConfig');
+
 // Create HTTP Server
 const server = http.createServer(app);
 
 // Initialize Socket.IO
 const io = new Server(server, {
   cors: {
-    origin: '*', // Allow all origins during development / hackathon
+    origin: (origin, callback) => {
+      if (!origin || isOriginAllowed(origin)) {
+        return callback(null, true);
+      }
+      return callback(new Error(`Socket.IO CORS Error: Origin ${origin} not permitted.`));
+    },
     methods: ['GET', 'POST', 'PUT', 'DELETE'],
     credentials: true,
   },
@@ -27,13 +34,13 @@ const io = new Server(server, {
 // Setup Socket.IO handlers & emitters
 initSocketIO(io);
 
-// Start server
-server.listen(PORT, () => {
+// Start server listening on 0.0.0.0 for container/cloud platforms
+server.listen(PORT, '0.0.0.0', () => {
   logger.info(`========================================================`);
   logger.info(` Aarogya Pravah AI Backend Server running on port ${PORT}`);
   logger.info(` Environment: ${process.env.NODE_ENV || 'development'}`);
-  logger.info(` Health check: http://localhost:${PORT}/api/health`);
-  logger.info(` Socket.IO endpoint active at ws://localhost:${PORT}`);
+  logger.info(` Health check: http://0.0.0.0:${PORT}/api/health`);
+  logger.info(` Socket.IO endpoint active at ws://0.0.0.0:${PORT}`);
   logger.info(`========================================================`);
 });
 

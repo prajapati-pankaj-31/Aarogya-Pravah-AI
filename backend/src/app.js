@@ -26,29 +26,9 @@ app.use(
   })
 );
 
-// CORS configuration - allow flexible frontend connections
-const allowedOrigins = [
-  process.env.CLIENT_URL || 'http://localhost:5173',
-  'http://localhost:3000',
-  'http://127.0.0.1:5173',
-  'http://127.0.0.1:3000',
-];
-
-app.use(
-  cors({
-    origin: function (origin, callback) {
-      // Allow requests with no origin (like mobile apps, curl, Postman)
-      if (!origin) return callback(null, true);
-      if (process.env.NODE_ENV === 'development' || allowedOrigins.includes(origin)) {
-        return callback(null, true);
-      }
-      return callback(null, true); // Permissive for hackathon development
-    },
-    credentials: true,
-    methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
-    allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With'],
-  })
-);
+// CORS configuration - production and development origin handling
+const { corsOptions } = require('./config/corsConfig');
+app.use(cors(corsOptions));
 
 // HTTP request logger
 if (process.env.NODE_ENV !== 'test') {

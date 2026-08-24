@@ -1,0 +1,66 @@
+# ==============================================================================
+# Render Blueprint Configuration for Aarogya Pravah AI
+# Note: Do NOT commit secrets directly into this file.
+# Supply secret values in the Render Dashboard when creating the Blueprint.
+# ==============================================================================
+
+services:
+  # 1. Node.js / Express / Socket.IO Web Service
+  - type: web
+    name: aarogya-pravah-backend
+    runtime: node
+    rootDir: backend
+    plan: starter
+    buildCommand: npm install
+    startCommand: npm start
+    healthCheckPath: /api/health
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: MONGODB_URI
+        sync: false # Set securely in Render dashboard (e.g. MongoDB Atlas connection string)
+      - key: JWT_SECRET
+        sync: false # Set securely in Render dashboard
+      - key: JWT_EXPIRES_IN
+        value: 7d
+      - key: FRONTEND_URL
+        sync: false # Set to your deployed Vercel frontend URL (e.g. https://aarogya-pravah-ai.vercel.app)
+      - key: CLIENT_URL
+        sync: false
+      - key: CLOUDINARY_CLOUD_NAME
+        sync: false
+      - key: CLOUDINARY_API_KEY
+        sync: false
+      - key: CLOUDINARY_API_SECRET
+        sync: false
+      - key: CLOUDINARY_FOLDER
+        value: aarogya-pravah-ai/xrays
+      - key: GROQ_API_KEY
+        sync: false
+      - key: GROQ_MODEL
+        value: llama-3.3-70b-versatile
+      - key: MODEL_SERVICE_URL
+        fromService:
+          type: pserv
+          name: aarogya-pravah-ml-service
+          property: host
+      - key: MODEL_SERVICE_TIMEOUT
+        value: 20000
+
+  # 2. Standalone FastAPI + TensorFlow DenseNet121 ML Screening Private Service
+  - type: pserv
+    name: aarogya-pravah-ml-service
+    runtime: docker
+    rootDir: ml-service
+    plan: standard
+    envVars:
+      - key: HOST
+        value: 0.0.0.0
+      - key: HF_REPO_ID
+        sync: false # Set in Render dashboard (e.g. kul-91/SIH_project)
+      - key: HF_MODEL_FILENAME
+        sync: false # Set in Render dashboard (e.g. chest_abnormality_densenet121_final.keras)
+      - key: HF_REPO_TYPE
+        value: dataset
+      - key: HF_TOKEN
+        sync: false # Set in Render dashboard (Hugging Face personal access token)

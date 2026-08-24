@@ -1,17 +1,57 @@
+# Dependencies
 node_modules/
+package-lock.json.log
+
+# Production Build Outputs
 dist/
+build/
+.next/
+out/
+
+# Environment Variables & Secrets (NEVER COMMIT)
 .env
 .env.*
+.env.local
+.env.development
+.env.test
+.env.production
 !.env.example
+
+# Local Uploads and Temp Files
 uploads/*
 !uploads/.gitkeep
+tmp/
+temp/
+
+# Logs
 logs/
 *.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
 
-# Python / ML Service
+# Python & ML Service Virtual Environments & Model Artifacts
 __pycache__/
 *.py[cod]
+*$py.class
 venv/
 .venv/
+env/
+.env_ml/
 model_cache/
+*.keras
+*.h5
+*.pt
+*.pth
+*.onnx
 
+# IDE & OS Artifacts
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
