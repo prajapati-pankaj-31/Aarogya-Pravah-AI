@@ -94,15 +94,17 @@ Patient Intake + Optional X-Ray
 ### 2. Multi-Factor Mathematical Formulation
 The final queue position is calculated **strictly in the backend** (`backend/src/services/priorityService.js`):
 
-$$\text{Priority Score} = S_{\text{clinical}} + S_{\text{accident}} + S_{\text{ai\_urgency}} + S_{\text{ai\_risk}} + S_{\text{image}} + S_{\text{aging}} + S_{\text{pending\_return}}$$
+```text
+Priority Score = S_clinical + S_accident + S_urgency + S_risk + S_image + S_aging + S_hold
+```
 
-* **$S_{\text{clinical}}$**: Staff-verified severity ($10$ pts for `LOW`, $25$ pts for `MEDIUM`, $50$ pts for `HIGH`, $80$ pts for `CRITICAL`).
-* **$S_{\text{accident}}$**: Trauma boost ($0$ pts for `NONE`, $10$ pts for `EASY`, $25$ pts for `MEDIUM`, $45$ pts for `HIGH`).
-* **$S_{\text{ai\_urgency}}$**: Groq AI urgency assessment ($5$ to $45$ pts).
-* **$S_{\text{ai\_risk}}$**: Groq AI risk factors ($5$ to $40$ pts).
-* **$S_{\text{image}}$**: DenseNet screening score ($\text{round}(\text{imageScore} \times 30)$, max $30$ pts).
-* **$S_{\text{aging}}$**: Anti-starvation compensation ($+2.0$ pts added per 10 minutes wait, capped at $30$ pts).
-* **$S_{\text{pending\_return}}$**: Diagnostic hold return boost ($+35$ pts) for patients returning from labs/imaging.
+* **`S_clinical`**: Staff-verified severity (10 pts for `LOW`, 25 pts for `MEDIUM`, 50 pts for `HIGH`, 80 pts for `CRITICAL`).
+* **`S_accident`**: Trauma boost (0 pts for `NONE`, 10 pts for `EASY`, 25 pts for `MEDIUM`, 45 pts for `HIGH`).
+* **`S_urgency`**: Groq AI urgency assessment (5 to 45 pts).
+* **`S_risk`**: Groq AI risk factors (5 to 40 pts).
+* **`S_image`**: DenseNet screening score (`round(imageScore × 30)`, max 30 pts).
+* **`S_aging`**: Anti-starvation compensation (+2.0 pts added per 10 minutes wait, capped at 30 pts).
+* **`S_hold`**: Diagnostic hold return boost (+35 pts) for patients returning from labs/imaging.
 
 ---
 
