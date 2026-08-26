@@ -20,7 +20,18 @@ export const appointmentService = {
       const possibleCondition = appointment.possibleDisease || appointment.possibleCondition || "";
       const symptoms = appointment.symptoms || "General discomfort";
       const symptomsDescription = appointment.symptomsDescription || "";
-      const severityLevel = (appointment.severity || appointment.severityLevel || "MEDIUM").toUpperCase();
+      
+      // Normalize severity level to canonical backend enum (LOW | MEDIUM | HIGH | CRITICAL)
+      const rawSeverity = appointment.severity || appointment.severityLevel || "MEDIUM";
+      const upperSev = String(rawSeverity).trim().toUpperCase();
+      const severityLevel = (upperSev === "EASY" || upperSev === "ROUTINE" || upperSev === "MILD" || upperSev === "LOW")
+        ? "LOW"
+        : (upperSev === "HIGH" || upperSev === "SEVERE" || upperSev === "URGENT")
+        ? "HIGH"
+        : (upperSev === "CRITICAL" || upperSev === "EMERGENCY")
+        ? "CRITICAL"
+        : "MEDIUM";
+
       const isAccident = appointment.isAccidentalCase || appointment.isAccident || false;
       const accidentSeverity = (appointment.accidentSeverity || "NONE").toUpperCase();
 

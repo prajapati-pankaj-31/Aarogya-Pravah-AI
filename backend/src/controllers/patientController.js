@@ -109,6 +109,18 @@ const bookAppointment = async (req, res, next) => {
 
     const initialEstimatedWaitMinutes = (currentWaitingCount + 1) * avgMinutesPerPatient;
 
+    // Normalize severityLevel to canonical enum value (LOW, MEDIUM, HIGH, CRITICAL)
+    const rawSeverity = severityLevel || 'MEDIUM';
+    const upperSeverity = String(rawSeverity).trim().toUpperCase();
+    const canonicalSeverity =
+      (upperSeverity === 'EASY' || upperSeverity === 'ROUTINE' || upperSeverity === 'MILD' || upperSeverity === 'LOW')
+        ? 'LOW'
+        : (upperSeverity === 'HIGH' || upperSeverity === 'SEVERE' || upperSeverity === 'URGENT')
+        ? 'HIGH'
+        : (upperSeverity === 'CRITICAL' || upperSeverity === 'EMERGENCY')
+        ? 'CRITICAL'
+        : 'MEDIUM';
+
     // 5. Create Appointment Record
     const appointment = await Appointment.create({
       tokenNumber,
@@ -117,7 +129,7 @@ const bookAppointment = async (req, res, next) => {
       possibleCondition,
       symptoms: parsedSymptoms,
       symptomsDescription,
-      reportedSeverity: (severityLevel || 'MEDIUM').toUpperCase(),
+      reportedSeverity: canonicalSeverity,
       isAccident: isAccidentCase,
       accidentSeverity: isAccidentCase ? (accidentSeverity || 'MEDIUM').toUpperCase() : 'NONE',
       medicalImage: medicalImageAsset || undefined,
@@ -154,6 +166,7 @@ const bookAppointment = async (req, res, next) => {
       appointmentId: appointment._id,
       patientName: patient.name,
       department: appointment.department,
+      reportedSeverity: appointment.reportedSeverity,
       appointmentTime: appointment.appointmentDate,
       estimatedWaitMinutes: appointment.initialEstimatedWaitMinutes,
       status: appointment.status,
@@ -195,6 +208,15 @@ const bookAppointmentValidation = [
   body('department').trim().notEmpty().withMessage('Department is required'),
   body('severityLevel')
     .optional()
+    .customSanitizer((val) => {
+      if (!val) return 'MEDIUM';
+      const upper = String(val).trim().toUpperCase();
+      if (upper === 'EASY' || upper === 'ROUTINE' || upper === 'MILD' || upper === 'LOW') return 'LOW';
+      if (upper === 'MEDIUM' || upper === 'MODERATE' || upper === 'DISCOMFORT') return 'MEDIUM';
+      if (upper === 'HIGH' || upper === 'SEVERE' || upper === 'URGENT') return 'HIGH';
+      if (upper === 'CRITICAL' || upper === 'EMERGENCY') return 'CRITICAL';
+      return upper;
+    })
     .isIn(['LOW', 'MEDIUM', 'HIGH', 'CRITICAL'])
     .withMessage('Severity level must be LOW, MEDIUM, HIGH, or CRITICAL'),
 ];

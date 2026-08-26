@@ -17,7 +17,7 @@ export const PatientPortal = () => {
     },
     appointment: {
       department: "Cardiology",
-      severity: "High",
+      severity: "HIGH",
       symptoms: "",
       possibleDisease: "",
       isAccidentalCase: false,
@@ -290,9 +290,9 @@ export const PatientPortal = () => {
                       onChange={(e) => handleInputChange("appointment", "severity", e.target.value)}
                       className="w-full bg-surface-container-lowest border border-outline-variant rounded-md px-3 sm:px-4 py-2 focus:border-primary focus:ring-1 focus:ring-primary text-on-surface font-body-md transition-colors box-border"
                     >
-                      <option value="Easy">Easy (Routine checkup)</option>
-                      <option value="Medium">Medium (Discomfort, non-urgent)</option>
-                      <option value="High">High (Severe pain, urgent)</option>
+                      <option value="LOW">Easy (Routine checkup)</option>
+                      <option value="MEDIUM">Medium (Discomfort, non-urgent)</option>
+                      <option value="HIGH">High (Severe pain, urgent)</option>
                     </select>
                   </div>
                 </div>
