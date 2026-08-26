@@ -33,8 +33,9 @@ const User = require('../src/models/User');
 
 const TEST_DEPT = 'Emergency';
 
-// Real Cloudinary test image URL (anonymized radiograph)
-const REAL_CLOUDINARY_XRAY = 'https://res.cloudinary.com/txxqpjph/image/upload/v1787486231/aarogya-pravah-ai/xrays/xray_anon_1787486227588_8bf590e9.png';
+// Dynamic Cloudinary test image URL (anonymized radiograph)
+const cloudName = process.env.CLOUDINARY_CLOUD_NAME || 'demo';
+const REAL_CLOUDINARY_XRAY = `https://res.cloudinary.com/${cloudName}/image/upload/v1787486231/aarogya-pravah-ai/xrays/xray_anon_sample.png`;
 
 async function runVerification() {
   console.log('================================================================');

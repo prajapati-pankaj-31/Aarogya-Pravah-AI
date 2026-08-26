@@ -172,7 +172,7 @@ To deploy this service on [Render](https://render.com) as a **Private Service** 
 * **Request**:
 ```json
 {
-  "image_url": "https://res.cloudinary.com/txxqpjph/image/upload/v12345/aarogya-pravah-ai/xrays/xray_anon_1787430187_7b38f8a0.jpg"
+  "image_url": "https://res.cloudinary.com/your_cloud_name/image/upload/v12345/aarogya-pravah-ai/xrays/xray_anon_sample.jpg"
 }
 ```
 * **Response**:
