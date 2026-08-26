@@ -57,7 +57,7 @@ services:
       - key: HOST
         value: 0.0.0.0
       - key: HF_REPO_ID
-        sync: false # Set in Render dashboard (e.g. kul-91/SIH_project)
+        sync: false # Set in Render dashboard (e.g. HF_username/HF_model_name)
       - key: HF_MODEL_FILENAME
         sync: false # Set in Render dashboard (e.g. chest_abnormality_densenet121_final.keras)
       - key: HF_REPO_TYPE

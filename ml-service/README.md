@@ -140,7 +140,7 @@ To deploy this service on [Render](https://render.com) as a **Private Service** 
 
 2. **Configure Environment Variables**:
    Under the service **Environment** settings, add:
-   - `HF_REPO_ID`: `kul-91/SIH_project`
+   - `HF_REPO_ID`: `HF_username/HF_repo_name`
    - `HF_MODEL_FILENAME`: `chest_abnormality_densenet121_final.keras`
    - `HF_REPO_TYPE`: `dataset`
    - `HF_TOKEN`: `hf_...` (your Hugging Face access token)
