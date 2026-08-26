@@ -266,10 +266,10 @@ VITE_SOCKET_URL=https://your-backend.onrender.com
 ```env
 HOST=0.0.0.0
 PORT=8001
-HF_REPO_ID=kul-91/SIH_project
+HF_REPO_ID=your_HF_username/your_HF_repo_name
 HF_MODEL_FILENAME=chest_abnormality_densenet121_final.keras
 HF_REPO_TYPE=dataset
-HF_TOKEN=hf_your_access_token
+HF_TOKEN=your_HF_access_token
 ```
 
 ---
